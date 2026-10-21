@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="snowflake-source" content="cortex-agent-authored">
+  <meta name="description" content="Trine’s Fieldnotes — personal guides, architecture patterns, and demos for data & AI with Snowflake.">
+  <meta name="theme-color" content="#f7f5ef">
+  <title>Trine’s Fieldnotes — Data & AI, in practice</title>
+  <script type="application/json" id="snowflake-report-metadata">
+    {"generated":"2026-10-21","intent":"Personal, customer-facing library of HTML guides focused on data and AI with Snowflake, explicitly distinguished from official Snowflake documentation. Public library landing page; source guides are not yet available.","sections":[{"id":"library","title":"The fieldnotes","dataSources":[{"type":"user-provided","description":"User named multi-agent patterns and Power BI + Snowflake as initial topics. Original HTML files have not been supplied."}],"producerNotes":"Cards are static HTML. To add a guide, add an article with data-category and data-status, copy its approved assets into pages/<slug>/, and use a relative link to pages/<slug>/. Set data-status to ready and replace the preview notice with the link. Never include confidential content in public deployment."}]}
+  </script>
+  <style>
+    :root { color-scheme: light dark; --paper:#f7f5ef; --card:#fffefa; --ink:#243a48; --muted:#5f6f76; --line:#d9dfda; --blue:#17658c; --wash:#e8f0f2; --green:#426f5c; --amber:#896338; --shadow:0 10px 28px #243a4808; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; line-height:1.6; }
+    a { color:var(--blue); text-underline-offset:5px; }
+    button,input { font:inherit; }
+    button { cursor:pointer; }
+    a:focus-visible,button:focus-visible,input:focus-visible { outline:3px solid var(--blue); outline-offset:5px; }
+    .wrap { width:min(1120px,100%); margin:auto; padding-inline:clamp(22px,5vw,64px); }
+    .skip { position:absolute; left:20px; top:-100px; padding:10px 16px; background:var(--card); z-index:3; }
+    .skip:focus { top:10px; }
+    header { border-bottom:1px solid var(--line); }
+    .masthead { display:flex; justify-content:space-between; align-items:center; gap:20px; min-height:96px; }
+    .brand { display:flex; gap:12px; align-items:center; text-decoration:none; color:var(--ink); font-weight:650; font-size:17px; }
+    .monogram { display:grid; place-items:center; width:39px; height:45px; border:1px solid var(--blue); border-radius:3px 9px 9px 3px; color:var(--blue); font:italic 24px Georgia,serif; box-shadow:inset 4px 0 0 var(--wash); }
+    nav a { font-size:13px; color:var(--muted); text-decoration:none; }
+    nav a:hover { color:var(--blue); text-decoration:underline; }
+    .hero { display:grid; grid-template-columns:minmax(0,1fr) 230px; gap:50px; align-items:center; padding-block:76px 67px; }
+    .eyebrow { font:11px ui-monospace,SFMono-Regular,Consolas,monospace; text-transform:uppercase; letter-spacing:2px; color:var(--blue); }
+    h1 { font:normal clamp(46px,6.8vw,76px)/1.07 Georgia,"Times New Roman",serif; letter-spacing:-2px; margin:22px 0; }
+    h1 em { font-weight:normal; color:var(--blue); }
+    .intro { max-width:510px; color:var(--muted); font-size:17px; margin:0; }
+    .hero-link { display:inline-block; margin-top:24px; font-size:13px; font-weight:600; }
+    .notebook { transform:rotate(5deg); position:relative; height:254px; border:1px solid var(--line); border-radius:4px 14px 14px 4px; padding:34px 22px 26px 32px; background:var(--card); box-shadow:7px 7px 0 var(--wash),var(--shadow); }
+    .notebook::before { content:""; position:absolute; left:14px; inset-block:0; border-left:1px solid var(--line); }
+    .notebook p { font:italic 24px/1.25 Georgia,serif; margin:29px 0 22px; }
+    .notebook .rule { height:15px; border-top:1px solid var(--line); }
+    .notebook small { font:9px ui-monospace,monospace; letter-spacing:1px; color:var(--muted); }
+    .library { border-top:1px solid var(--line); padding-block:33px 64px; scroll-margin-top:20px; }
+    .section-head { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:baseline; gap:12px; }
+    h2 { font:normal 30px Georgia,serif; letter-spacing:-.5px; margin:0; }
+    .section-head p { font:11px ui-monospace,monospace; color:var(--muted); }
+    .tools { margin:24px 0; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:20px; }
+    .filters { display:flex; flex-wrap:wrap; gap:7px; }
+    .filter { border:1px solid transparent; border-radius:7px; background:transparent; color:var(--muted); padding:8px 12px; font-size:12px; }
+    .filter[aria-pressed="true"] { background:var(--ink); color:var(--paper); }
+    .filter:hover { border-color:var(--muted); }
+    .search { display:flex; align-items:center; gap:10px; border:1px solid var(--line); background:var(--card); border-radius:7px; padding:8px 12px; width:min(100%,275px); }
+    .search label { font-size:12px; color:var(--muted); }
+    .search input { min-width:0; width:100%; border:0; color:var(--ink); background:transparent; font-size:13px; padding:2px; }
+    .cards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; }
+    .card { display:flex; flex-direction:column; min-width:0; background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; box-shadow:var(--shadow); }
+    .art { height:170px; display:grid; place-items:center; background:var(--wash); border-bottom:1px solid var(--line); color:var(--blue); background-image:radial-gradient(var(--line) 1px,transparent 1px); background-size:18px 18px; }
+    .art svg { width:230px; max-width:85%; height:auto; overflow:visible; }
+    .art.analytics { color:var(--green); }
+    .card-body { padding:26px; display:flex; flex:1; flex-direction:column; }
+    .card-top { display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap; }
+    .category { font:10px ui-monospace,monospace; text-transform:uppercase; letter-spacing:1px; color:var(--blue); }
+    .number { font:11px ui-monospace,monospace; color:var(--muted); }
+    h3 { font:normal 27px/1.25 Georgia,serif; letter-spacing:-.5px; margin:17px 0 12px; }
+    .description { font-size:14px; color:var(--muted); margin:0 0 22px; }
+    .tags { display:flex; gap:7px; flex-wrap:wrap; margin-top:auto; }
+    .tag { font-size:10px; padding:3px 8px; border:1px solid var(--line); border-radius:4px; color:var(--muted); }
+    .card-bottom { border-top:1px solid var(--line); margin-top:24px; padding-top:17px; font-size:11px; color:var(--amber); display:flex; gap:8px; align-items:center; }
+    .dot { width:5px; height:5px; background:currentColor; border-radius:50%; flex:none; }
+    .empty { padding:36px 20px; border:1px dashed var(--line); border-radius:8px; text-align:center; }
+    .empty p { color:var(--muted); font-size:14px; }
+    .reset { color:var(--blue); background:var(--card); border:1px solid var(--line); padding:8px 16px; border-radius:6px; }
+    .preview-note { margin-top:24px; color:var(--muted); font-size:12px; }
+    .about { display:grid; grid-template-columns:1fr 2fr; gap:40px; border-top:1px solid var(--line); padding-block:34px 46px; scroll-margin-top:20px; }
+    .about h2 { font-size:24px; margin-top:10px; }
+    .about p { margin:0; font-size:14px; color:var(--muted); max-width:550px; }
+    footer { border-top:1px solid var(--line); }
+    .footer-inner { display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; padding-block:22px; font-size:11px; color:var(--muted); }
+    [hidden] { display:none !important; }
+    @media (prefers-color-scheme:dark) { :root { --paper:#172127; --card:#1d2a32; --ink:#e1e7e8; --muted:#a8b8bf; --line:#37474e; --blue:#80c8eb; --wash:#243640; --green:#9dcab3; --amber:#d8b98f; --shadow:none; } }
+    @media (max-width:700px) { .hero { grid-template-columns:1fr; padding-block:48px; gap:0; } .notebook { display:none; } .cards { grid-template-columns:1fr; } .about { grid-template-columns:1fr; gap:18px; } .masthead { min-height:80px; } .brand { font-size:15px; } h1 { letter-spacing:-1.5px; } .tools { align-items:stretch; } .search { width:100%; } .art { height:150px; } }
+    @media (prefers-reduced-motion:no-preference) { .card { transition:transform .2s,box-shadow .2s; } .card:hover { transform:translateY(-3px); box-shadow:0 14px 28px #243a4810; } }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#library">Skip to library</a>
+  <header><div class="wrap masthead"><a class="brand" href="./" aria-label="Trine’s Fieldnotes home"><span class="monogram" aria-hidden="true">ts.</span>Trine’s Fieldnotes</a><nav aria-label="Main navigation"><a href="#about">About the collection</a></nav></div></header>
+  <main class="wrap">
+    <section class="hero" aria-labelledby="page-title">
+      <div><div class="eyebrow">Data & AI with Snowflake</div><h1 id="page-title">From big ideas<br>to <em>fieldnotes.</em></h1><p class="intro">Practical guides, architecture patterns, and demos for data & AI with Snowflake. A personal collection by Trine Siewartz.</p><a class="hero-link" href="#library">Explore the collection <span aria-hidden="true">↗</span></a></div>
+      <div class="notebook" aria-hidden="true"><small>TRINE’S FIELDNOTES</small><p>Good ideas.<br>Practical patterns.<br>New possibilities.</p><div class="rule"></div><div class="rule"></div><small>NOTES FROM THE FIELD</small></div>
+    </section>
+    <section class="library" id="library" aria-labelledby="library-title">
+      <div class="section-head"><h2 id="library-title">The fieldnotes</h2><p id="results" role="status" aria-live="polite" aria-atomic="true">2 topics · 0 published guides</p></div>
+      <div class="tools" id="tools" hidden>
+        <div class="filters" role="group" aria-label="Filter by topic"><button class="filter" type="button" data-filter="all" aria-pressed="true">All notes</button><button class="filter" type="button" data-filter="ai" aria-pressed="false">AI & Agents</button><button class="filter" type="button" data-filter="analytics" aria-pressed="false">BI & Analytics</button></div>
+        <div class="search"><label for="search">Search</label><input id="search" type="search" placeholder="Find a fieldnote…" autocomplete="off"></div>
+      </div>
+      <div class="cards" id="cards">
+        <article class="card" data-category="ai" data-status="pending">
+          <div class="art" aria-hidden="true"><svg viewBox="0 0 260 130" fill="none"><path d="M130 41V65M130 65H43V86M130 65H217V86M130 65V86" stroke="currentColor" stroke-width="1.5"/><rect x="92" y="9" width="76" height="32" rx="7" fill="var(--card)" stroke="currentColor" stroke-width="1.5"/><rect x="15" y="86" width="56" height="32" rx="7" fill="var(--card)" stroke="currentColor" stroke-width="1.5"/><rect x="102" y="86" width="56" height="32" rx="7" fill="var(--card)" stroke="currentColor" stroke-width="1.5"/><rect x="189" y="86" width="56" height="32" rx="7" fill="var(--card)" stroke="currentColor" stroke-width="1.5"/><circle cx="130" cy="25" r="5" fill="currentColor"/><circle cx="43" cy="102" r="4" fill="currentColor"/><circle cx="130" cy="102" r="4" fill="currentColor"/><circle cx="217" cy="102" r="4" fill="currentColor"/></svg></div>
+          <div class="card-body"><div class="card-top"><span class="category">AI & Agents</span><span class="number">FIELDNOTE / 01</span></div><h3>Multi-agent patterns</h3><p class="description">A place for the multi-agent patterns guide.</p><div class="tags"><span class="tag">Multi-agent</span><span class="tag">Architecture</span></div><div class="card-bottom"><span class="dot" aria-hidden="true"></span>Guide coming soon</div></div>
+        </article>
+        <article class="card" data-category="analytics" data-status="pending">
+          <div class="art analytics" aria-hidden="true"><svg viewBox="0 0 260 130" fill="none"><rect x="15" y="24" width="84" height="82" rx="8" fill="var(--card)" stroke="currentColor" stroke-width="1.5"/><path d="M99 65H160M151 58L160 65L151 72" stroke="currentColor" stroke-width="1.5"/><path d="M35 82V62M56 82V50M77 82V39" stroke="currentColor" stroke-width="9" stroke-linecap="round"/><ellipse cx="203" cy="35" rx="35" ry="13" fill="var(--card)" stroke="currentColor" stroke-width="1.5"/><path d="M168 35V91C168 108 238 108 238 91V35M168 63C168 80 238 80 238 63" stroke="currentColor" stroke-width="1.5"/></svg></div>
+          <div class="card-body"><div class="card-top"><span class="category">BI & Analytics</span><span class="number">FIELDNOTE / 02</span></div><h3>Power BI + Snowflake</h3><p class="description">A place for the Power BI and Snowflake guide.</p><div class="tags"><span class="tag">Power BI</span><span class="tag">Snowflake</span></div><div class="card-bottom"><span class="dot" aria-hidden="true"></span>Guide coming soon</div></div>
+        </article>
+      </div>
+      <div class="empty" id="empty" hidden><h3>No matching fieldnotes</h3><p>Try a different search or browse all topics.</p><button class="reset" id="reset" type="button">Show all notes</button></div>
+      <p class="preview-note">The collection is taking shape. The first guides are coming soon.</p>
+      <noscript><p>Search and filters need JavaScript. All fieldnotes are shown above.</p></noscript>
+    </section>
+    <section class="about" id="about" aria-labelledby="about-title"><div><div class="eyebrow">Behind the notes</div><h2 id="about-title">Curated by Trine.</h2></div><p>A growing collection for conversations about data and AI: a home for practical explainers, useful patterns, and ideas to explore together. Pick a topic, open a guide, and take the conversation further.</p></section>
+  </main>
+  <footer><div class="wrap footer-inner"><span>Trine Siewartz · Fieldnotes</span><span>Personal perspectives, not official Snowflake documentation. <a href="https://docs.snowflake.com/">Official docs ↗</a></span></div></footer>
+  <script>
+    (() => {
+      const search = document.getElementById('search');
+      const filters = Array.from(document.querySelectorAll('[data-filter]'));
+      const cards = Array.from(document.querySelectorAll('.card'));
+      const results = document.getElementById('results');
+      const empty = document.getElementById('empty');
+      let category = 'all';
+      const normalize = text => text.normalize('NFKC').toLocaleLowerCase().trim();
+      const searchable = new Map(cards.map(card => [card, normalize(card.querySelector('.card-body').textContent)]));
+      function update() {
+        const words = normalize(search.value).split(/\s+/).filter(Boolean);
+        let visible = 0;
+        let published = 0;
+        cards.forEach(card => {
+          const matchesCategory = category === 'all' || card.dataset.category === category;
+          card.hidden = !(matchesCategory && words.every(word => searchable.get(card).includes(word)));
+          if (!card.hidden) { visible += 1; if (card.dataset.status === 'ready') published += 1; }
+        });
+        filters.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.filter === category)));
+        results.textContent = `${visible} ${visible === 1 ? 'topic' : 'topics'} · ${published} published ${published === 1 ? 'guide' : 'guides'}`;
+        empty.hidden = visible !== 0;
+      }
+      filters.forEach(button => button.addEventListener('click', () => { category = button.dataset.filter; update(); }));
+      search.addEventListener('input', update);
+      document.getElementById('reset').addEventListener('click', () => { category = 'all'; search.value = ''; update(); search.focus(); });
+      document.getElementById('tools').hidden = false;
+      update();
+    })();
+  </script>
+</body>
+</html>

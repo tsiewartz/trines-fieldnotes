@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="snowflake-source" content="cortex-agent-authored">
+<meta name="description" content="Power BI reporting with Snowflake as the data platform: Import, DirectQuery, interactive warehouses, composite models, XMLA and Apache Ossie.">
+<title>Power BI + Snowflake | Trine’s Fieldnotes</title>
+<script type="application/json" id="snowflake-report-metadata">
+{
+  "generated": "2026-10-21",
+  "publication": {"date":"2026-10-21","notes":"Imported into Trine’s Fieldnotes from the user-provided HTML. Technical content and caveats retained, not independently revalidated during publication. Internal slide URL omitted from public metadata; original provenance remains in the source file. Added library navigation and personal-documentation disclaimer."},
+  "intent": "Technical reference for Power BI with Snowflake as the data platform. Covers Import, DirectQuery on standard or interactive warehouses, composite/hybrid models, semantic ownership, XMLA and Ossie. Revised at user request to remove Fabric mirroring, Direct Lake and OneLake adoption routes. Import caches remain explicit; this is not a claim that all report execution happens in Snowflake. Not a measured benchmark or implementation commitment.",
+  "dataSources": [{"type":"conversation","description":"Power BI and Snowflake options researched with official documentation and vendor announcements on 2026-10-21; no customer account queries or customer records used."}],
+  "assumptions": ["Use-case examples are illustrative, not recommendations for a specific organization.","XMLA endpoint current GA status, licensing, compatibility and customer eligibility have not been verified.","Ossie converter availability is supported by the September 30 Snowflake announcement; its full code-level coverage was not independently inspected."],
+  "sections": [
+    {"id":"overview","title":"Power BI with Snowflake","producerNotes":"Short introduction only. User-approved simplification removes the opening architecture diagram and three-question strip; execution boundaries remain in the connection panels."},
+    {"id":"decision-guide","title":"Choose a starting point","producerNotes":"User-approved decision guide based on the existing access, semantics and interoperability sections and their cited sources. Separate branches for data access and semantic ownership, with nested DirectQuery compute choices and Ossie as a separate model-exchange track. Evaluation heuristics, not measured recommendations or guaranteed compatibility. Static HTML/CSS branches. JavaScript reveals linked panels and opens target or ancestor disclosures, including repeated hash links. Native details remain manually expandable without JavaScript."},
+    {"id":"access","title":"Choose the data access pattern","dataSources":[{"type":"url","url":"https://learn.microsoft.com/en-us/power-query/connectors/snowflake"},{"type":"url","url":"https://learn.microsoft.com/en-us/power-bi/guidance/composite-model-guidance"},{"type":"url","url":"https://docs.snowflake.com/en/user-guide/interactive"}],"producerNotes":"Four option panels with expandable implementation constraints. Duplicate comparison table removed in the user-approved simplification. JavaScript selects the visible panel; Import is the neutral first option. Without JavaScript or in print, all four panels are available. Illustrative use cases, not measured performance."},
+    {"id":"shared-definitions","title":"Shared business definitions for Power BI and AI","dataSources":[{"type":"author-provided","description":"Source presentation attribution retained in the original private source file; omitted from this public copy."}],"producerNotes":"User-approved adaptation of the slide read via authenticated Google Slides connector. Self-contained HTML/CSS, not an embedded slide or external image. Power BI is primary; AI and SQL applications are secondary. Runtime access and Ossie design-time exchange are separated. Removes free/automatic-consumption claims. Qualifications and supporting technical references are in the semantics and interoperability sections. Diagram expresses a reuse pattern, not verified deployment compatibility. Removed visible slide-adaptation commentary at user request; slide attribution remains in the original private source file. Availability caveats retained in customer-facing language."},
+    {"id":"semantics","title":"Decide where business logic lives","dataSources":[{"type":"url","url":"https://docs.snowflake.com/en/user-guide/views-semantic/best-practices-dev"},{"type":"url","url":"https://www.atscale.com/press/atscale-snowflake-semantic-views-power-bi-excel/"},{"type":"url","url":"https://learn.microsoft.com/en-us/fabric/enterprise/powerbi/service-premium-connect-tools"}],"producerNotes":"Three collapsed implementation notes follow the shared-semantics visual. Keep Snowflake XMLA distinct from the Power BI Service endpoint. Vendor launch described private preview soon; verify current status before changing this caveat."},
+    {"id":"interoperability","title":"Reuse definitions, not just data","dataSources":[{"type":"url","url":"https://www.snowflake.com/en/blog/engineering/apache-ossie-microsoft-ecosystem-support/"},{"type":"url","url":"https://docs.snowflake.com/en/user-guide/views-semantic/power-bi-ingestion"},{"type":"url","url":"https://docs.snowflake.com/en/user-guide/snowflake-horizon/horizon-context"}],"producerNotes":"Optional collapsed model-reuse reference. Removed duplicate XMLA-versus-Ossie comparison. Ossie is exchange, not execution or automatic lossless DAX translation. Ingestion and cataloging are separate capabilities."},
+    {"id":"pilot","title":"Technical evaluation checklist","producerNotes":"One collapsed checklist replaces six visible cards. Read-only guidance for recording requirements and testing result equivalence, latency, freshness, identity, data movement and cost. No pilot or migration is prescribed."},
+    {"id":"reference","title":"Optional technical reference","producerNotes":"User-approved progressive disclosure groups model reuse, cataloging and evaluation. Research snapshot is unchanged; this revision does not reverify product availability."},
+    {"id":"sources","title":"References and availability","producerNotes":"Public source links only. Recheck release status and documentation before reuse; no runtime network requests."}
+  ]
+}
+</script>
+<style>
+:root{color-scheme:light dark;--bg:#f5f5f1;--paper:#fff;--ink:#152c3c;--muted:#536774;--line:#dbe3e7;--blue:#086caa;--cyan:#29b5e8;--soft:#edf7fb;--green:#26664f;--greenbg:#eef7f1;--amber:#86520b;--amberbg:#fff5e2;--navy:#102d40;--shadow:0 16px 50px #102d4009}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:92px}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:16px;line-height:1.65}a{color:var(--blue);text-underline-offset:4px}button{font:inherit}button,a,summary{-webkit-tap-highlight-color:transparent}:focus-visible{outline:3px solid var(--cyan);outline-offset:5px}button{cursor:pointer}h1,h2,h3,h4,p{margin:0}h1,h2,h3,h4{line-height:1.12}h1{font-size:clamp(44px,5.8vw,78px);font-weight:650;letter-spacing:-.065em}h2{font-size:clamp(29px,3.5vw,43px);letter-spacing:-.045em;font-weight:650}h3{font-size:23px;letter-spacing:-.035em}h4{font-size:17px;letter-spacing:-.01em}p+p{margin-top:12px}img,svg{max-width:100%;height:auto}[hidden]{display:none!important}.wrap{width:min(1180px,100%);padding-inline:32px;margin:auto}.skip{position:fixed;top:-100px;left:16px;background:var(--paper);padding:12px;z-index:30}.skip:focus{top:10px}.topbar{background:var(--paper);border-bottom:1px solid var(--line)}.masthead{display:flex;align-items:center;justify-content:space-between;gap:22px;padding-block:22px}.brandline{display:flex;align-items:center;gap:22px}.customer{font-weight:850;letter-spacing:.16em;font-size:21px}.divider{height:25px;width:1px;background:var(--line)}.snowflake{font-size:21px;letter-spacing:-.035em;color:var(--blue);font-weight:500}.mastnote{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.14em}.nav{position:sticky;top:0;z-index:10;background:var(--paper);border-bottom:1px solid var(--line)}.navinner{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:58px}.navlinks{display:flex;flex-wrap:wrap;gap:22px}.navlinks a{font-size:12px;text-decoration:none;color:var(--muted);font-weight:600;white-space:nowrap}.navlinks a:hover{color:var(--blue)}.printbtn{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:6px;padding:6px 12px;font-size:12px;white-space:nowrap}.eyebrow{text-transform:uppercase;letter-spacing:.16em;font-size:11px;font-weight:750;color:var(--blue)}.hero{padding-top:66px;padding-bottom:45px;display:grid;grid-template-columns:1.05fr 1fr;gap:56px;align-items:center}.hero h1{margin:20px 0 24px}.hero h1 span{color:var(--blue)}.lead{font-size:18px;color:var(--muted);max-width:510px;line-height:1.65}.hero-bottom{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:26px}.cta{display:inline-block;padding:11px 18px;color:white;background:var(--blue);font-size:13px;border-radius:6px;text-decoration:none;font-weight:650}.date{font-size:12px;color:var(--muted)}.architecture{background:var(--navy);color:#fff;border-radius:14px;overflow:hidden;box-shadow:0 22px 60px #0c29381a;padding:30px;position:relative}.architecture:before{content:"";position:absolute;top:-140px;right:-120px;width:320px;height:320px;border:1px solid #ffffff12;border-radius:50%;pointer-events:none}.architecture .eyebrow{color:#84d9f7}.archhead{display:flex;justify-content:space-between;gap:12px;margin-bottom:26px}.archhead span:last-child{font-size:10px;color:#b4cbd8;letter-spacing:.08em;text-transform:uppercase}.archlabel{font-size:10px;color:#a7c3d2;text-transform:uppercase;letter-spacing:.14em;margin-bottom:9px}.consumers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.consumer{padding:14px 4px;border:1px solid #7393a64a;border-radius:6px;text-align:center;font-size:13px;background:#ffffff07}.consumer.primary{background:#fff1b5;color:#3c350c;border-color:#fff1b5;font-weight:700}.archjoin{text-align:center;font-size:11px;letter-spacing:.05em;color:#b7d3e2;padding:17px 0}.archjoin:before,.archjoin:after{content:"";display:inline-block;vertical-align:middle;width:24px;height:1px;background:#7e9eb4;margin:0 9px}.semantic-layer{border:1px solid #55c9f27a;background:#29b5e819;padding:16px;border-radius:7px}.semantic-layer strong{font-size:16px;font-weight:600}.semantic-layer p{font-size:12px;color:#bcd8e7;margin-top:5px}.engine-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.engine{border:1px solid #7393a64a;border-radius:6px;padding:13px;font-size:12px}.engine b{display:block;font-weight:600;font-size:13px;margin-bottom:3px}.engine span{color:#bcd0db}.foundation{border-top:1px solid #7393a64a;margin-top:19px;padding-top:16px;font-size:12px;color:#bcd0db;display:flex;justify-content:space-between;gap:12px}.arch-caption{margin-top:13px;color:var(--muted);font-size:11px}.thesis{border-block:1px solid var(--line);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:12px}.thesis-item{padding:26px 24px 26px 0}.thesis-item+.thesis-item{border-left:1px solid var(--line);padding-left:26px}.stepno{font-size:11px;font-weight:700;color:var(--blue);letter-spacing:.09em;margin-bottom:6px}.thesis h3{font-size:18px;margin-bottom:8px;letter-spacing:-.02em}.thesis p{font-size:13px;color:var(--muted)}.section{padding-top:76px}.section-head{display:grid;grid-template-columns:1.1fr 1fr;gap:50px;align-items:end;margin-bottom:28px}.section-head h2{margin-top:10px}.section-head>p{color:var(--muted);font-size:15px}.badge{display:inline-flex;align-items:center;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 9px;border-radius:4px;line-height:1.35;color:var(--blue);background:var(--soft)}.badge.amber{color:var(--amber);background:var(--amberbg)}.badge.green{color:var(--green);background:var(--greenbg)}.explorer{display:grid;grid-template-columns:248px minmax(0,1fr);border:1px solid var(--line);border-radius:12px;background:var(--paper);overflow:hidden;box-shadow:var(--shadow)}.routes{padding:18px;background:var(--bg);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:5px}.routes-title{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);padding:6px 12px 10px}.route-button{display:flex;gap:12px;text-align:left;width:100%;padding:13px 12px;border:1px solid transparent;background:transparent;color:var(--ink);border-radius:7px;align-items:baseline}.route-button .number{color:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}.route-button b{display:block;font-size:13px;line-height:1.4;font-weight:650}.route-button small{display:block;font-size:11px;color:var(--muted);margin-top:3px}.route-button:hover{background:var(--paper)}.route-button[aria-selected="true"]{background:var(--paper);border-color:var(--line);box-shadow:0 3px 10px #102d4007}.route-button[aria-selected="true"] .number,.route-button[aria-selected="true"] b{color:var(--blue)}.route-panel{padding:32px;min-width:0}.panel-top{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;margin-bottom:16px}.route-panel h3{font-size:30px;margin-bottom:12px}.panel-intro{color:var(--muted);font-size:15px;max-width:660px}.flow{display:flex;align-items:stretch;gap:9px;margin:26px 0}.flow-node{background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:14px 12px;flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;font-size:12px;line-height:1.5}.flow-node strong{font-size:13px;line-height:1.35;display:block;margin-bottom:3px}.flow-node span{color:var(--muted);font-size:11px}.flow-node.focus{background:var(--soft);border-color:color-mix(in srgb,var(--blue) 25%,var(--line))}.flow-arrow{align-self:center;font-size:19px;color:var(--blue)}.facts{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px}.fact-label{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}.facts p{font-size:13px}.callout{background:var(--soft);border-left:3px solid var(--blue);padding:14px 17px;border-radius:0 6px 6px 0;font-size:13px;line-height:1.65}.callout strong{font-weight:700}.callout.warn{background:var(--amberbg);border-color:var(--amber);color:var(--amber)}details{border-top:1px solid var(--line);margin-top:19px;padding-top:13px}summary{cursor:pointer;font-size:12px;font-weight:650;color:var(--blue);padding:3px 0}details ul{margin:12px 0 0;padding-left:18px;font-size:12px;color:var(--muted)}details li+li{margin-top:7px}.sourcelink{font-size:11px;margin-top:15px}.under-note{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:17px;font-size:12px;color:var(--muted)}.under-note strong{color:var(--ink)}.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:26px;min-width:0}.card .badge{margin-bottom:19px}.card h3{font-size:22px;margin-bottom:13px}.card p{font-size:13px;color:var(--muted)}.card .card-foot{margin-top:22px;padding-top:17px;border-top:1px solid var(--line);font-size:12px}.card-foot b{display:block;color:var(--ink);margin-bottom:4px}.semantic-path{margin:20px 0;font-size:11px;letter-spacing:.02em;background:var(--bg);border-radius:5px;padding:12px 13px;line-height:1.8;color:var(--ink)}.xmla-note{display:grid;grid-template-columns:185px 1fr;gap:25px;margin-top:18px;padding:22px 26px;background:var(--soft);border-radius:9px;font-size:13px}.xmla-note h4{font-size:16px}.xmla-note p{color:var(--muted)}.xmla-note strong{color:var(--ink)}.contrast{border-radius:12px;background:var(--navy);padding:32px;color:#fff;display:grid;grid-template-columns:1fr 1px 1fr;gap:35px;margin-bottom:22px}.contrast-divider{background:#ffffff25}.contrast .eyebrow{color:#8bdcf7}.contrast h3{font-size:28px;margin:11px 0 12px}.contrast p{color:#c4d8e2;font-size:14px}.contrast .contrast-bottom{margin-top:22px;font-size:12px;color:#b3dcec}.reuse-row{display:grid;grid-template-columns:52px 1fr 1fr;gap:24px;padding:25px 0;border-bottom:1px solid var(--line)}.reuse-letter{width:36px;height:36px;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;color:var(--blue);font-size:12px}.reuse-row h3{font-size:19px;margin-bottom:9px}.reuse-row p{font-size:13px;color:var(--muted)}.reuse-row .badge{margin-bottom:9px}.reuse-row a{font-size:11px}.pilot-shell{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper)}.pilot-banner{background:var(--soft);padding:28px 32px;display:flex;justify-content:space-between;gap:24px;align-items:center}.pilot-banner h3{font-size:24px;max-width:620px}.pilot-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:30px 32px;gap:35px}.pilot-step .stepno{margin-bottom:12px}.pilot-step h4{margin-bottom:12px}.pilot-step p{font-size:13px;color:var(--muted)}.scorecard{border-top:1px solid var(--line);padding:22px 32px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}.scorecard-label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}.scorecard span:not(.scorecard-label){font-size:12px;font-weight:650;border-left:2px solid var(--cyan);padding-left:9px}.closing{font-size:23px;line-height:1.5;letter-spacing:-.025em;max-width:850px;margin:32px auto 0;text-align:center;color:var(--muted)}.closing strong{color:var(--ink);font-weight:650}.sources{padding-top:60px;padding-bottom:44px}.sources details{margin:0;padding:20px 0;border-bottom:1px solid var(--line)}.sources summary{font-size:14px;color:var(--ink)}.source-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px 30px;margin-top:20px}.source-item{font-size:12px}.source-item b{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px}.source-note{margin-top:20px;font-size:12px;color:var(--muted)}footer{border-top:1px solid var(--line);padding:22px 0 32px;font-size:11px;color:var(--muted)}.footer-inner{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}.footer-inner b{color:var(--ink);letter-spacing:.1em}.nojs{padding:16px;background:var(--amberbg);color:var(--amber);font-size:13px}
+@media(prefers-color-scheme:dark){:root{--bg:#101c24;--paper:#162832;--ink:#e4edf2;--muted:#acbfcb;--line:#314651;--blue:#76cff0;--soft:#1b3746;--green:#9cdbb6;--greenbg:#203b30;--amber:#efca8a;--amberbg:#3a3020;--navy:#0a2333;--shadow:none}.cta{background:#29b5e8;color:#082638}.architecture{border:1px solid #314651}.route-button[aria-selected="true"]{box-shadow:none}}
+@media(min-width:1200px){.route-panel{min-height:550px}}
+@media(max-width:900px){.hero{gap:28px;padding-top:42px}.hero h1{font-size:54px}.architecture{padding:22px}.cards{grid-template-columns:1fr}.card{display:grid;grid-template-columns:1fr 1fr;column-gap:30px}.card .badge{justify-self:start;grid-column:1/-1;margin-bottom:14px}.card h3{grid-column:1}.card>.card-foot{grid-column:2;grid-row:2/5;margin:0;border-top:0;border-left:1px solid var(--line);padding:0 0 0 24px}.explorer{grid-template-columns:220px minmax(0,1fr)}.route-panel{padding:24px}.flow{gap:6px}.flow-node{padding:10px}.section-head{gap:25px}.navlinks{gap:15px}}
+@media(max-width:680px){.wrap{padding-inline:20px}.masthead{padding-block:18px}.customer{font-size:16px}.brandline{gap:13px}.snowflake{font-size:18px}.mastnote{display:none}.navinner{gap:10px;padding-block:10px;align-items:flex-start}.navlinks{gap:9px 17px}.navlinks a{font-size:11px}.printbtn{font-size:10px;padding:5px 8px}.hero{grid-template-columns:1fr;gap:32px;padding-top:34px;padding-bottom:28px}.hero h1{font-size:clamp(44px,11vw,64px)}.lead{font-size:16px}.hero h1 br{display:none}.architecture{padding:24px}.thesis{grid-template-columns:1fr}.thesis-item,.thesis-item+.thesis-item{padding:19px 0;border-left:0}.thesis-item+.thesis-item{border-top:1px solid var(--line)}.thesis p{max-width:460px}.section{padding-top:48px}.section-head{grid-template-columns:1fr;gap:15px}.section-head>p{font-size:14px}.explorer{grid-template-columns:1fr}.routes{display:grid;grid-template-columns:1fr 1fr;border-right:0;border-bottom:1px solid var(--line);gap:5px;padding:12px}.routes-title{grid-column:1/-1;padding:3px 9px}.route-button{padding:10px 8px;gap:7px}.route-button b{font-size:11px}.route-button small{font-size:10px}.route-panel{padding:23px 20px}.route-panel h3{font-size:26px}.facts{gap:20px}.flow{flex-direction:column;gap:6px;margin-block:20px}.flow-node{padding:12px 15px}.flow-arrow{transform:rotate(90deg);line-height:1}.under-note{grid-template-columns:1fr;gap:12px}.card{display:block;padding:24px}.card>.card-foot{border-left:0;border-top:1px solid var(--line);margin-top:20px;padding:16px 0 0}.xmla-note{grid-template-columns:1fr;gap:12px;padding:22px}.contrast{grid-template-columns:1fr;gap:24px;padding:26px}.contrast-divider{height:1px}.reuse-row{grid-template-columns:34px 1fr;gap:14px}.reuse-row>div:last-child{grid-column:2}.pilot-banner{display:block;padding:24px}.pilot-banner .badge{margin-top:17px}.pilot-steps{grid-template-columns:1fr;padding:24px;gap:25px}.pilot-step+.pilot-step{border-top:1px solid var(--line);padding-top:22px}.scorecard{padding:22px 24px;gap:14px}.scorecard-label{flex-basis:100%}.source-grid{grid-template-columns:1fr}.closing{font-size:20px}.sources{padding-top:38px}.footer-inner{gap:8px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media print{color-scheme:light;:root{--bg:#fff;--paper:#fff;--ink:#152c3c;--muted:#435663;--line:#ccd5da;--blue:#086caa;--soft:#eef6fa;--amber:#86520b;--amberbg:#fff5e2;--green:#26664f;--greenbg:#eef7f1}body{font-size:11px;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}.wrap{width:100%;max-width:none;padding-inline:0}.skip,.nav,.hero-bottom,.routes,.arch-caption{display:none!important}.masthead{padding:10px 0}.hero{padding:22px 0;gap:25px;grid-template-columns:1fr 1fr}.hero h1{font-size:42px}.lead{font-size:13px}.architecture{padding:19px;box-shadow:none}.thesis-item{padding-block:16px}.section{padding-top:30px}.section-head{margin-bottom:18px}.section-head h2{font-size:27px}.section-head>p{font-size:12px}.explorer{display:block;border:0;box-shadow:none}.route-panel,.route-panel[hidden]{display:block!important;min-height:0;border:1px solid var(--line);border-radius:8px;margin-bottom:16px;padding:20px;break-inside:avoid}.route-panel h3{font-size:24px}.flow{margin:17px 0}.facts{margin-bottom:15px}.route-panel details{display:block}.route-panel details ul{display:block}.cards{gap:12px}.card{padding:20px;break-inside:avoid}.contrast,.xmla-note,.reuse-row,.pilot-shell,.thesis{break-inside:avoid}.contrast{padding:22px}.pilot-banner{padding:20px}.pilot-steps{padding:20px;gap:20px}.sources{padding-block:25px}.source-grid{display:grid!important}.closing{font-size:19px}footer{padding:14px 0}.cta{display:none}@page{size:A4 landscape;margin:14mm}}
+/* Technical-reference layout: compact headings and a scan-friendly comparison. */
+.hero{padding-top:36px;padding-bottom:26px;gap:36px;grid-template-columns:1.1fr 1fr}
+.hero h1{font-size:clamp(30px,3.6vw,46px);letter-spacing:-.035em;margin:13px 0 12px}
+.hero-subtitle{font-size:21px;line-height:1.4;font-weight:550;margin-bottom:17px}
+.lead{font-size:15px;line-height:1.7}.hero-bottom{margin-top:18px}.scope-note{font-size:12px;color:var(--muted);margin-top:18px;border-left:2px solid var(--line);padding-left:14px}
+.architecture{padding:22px;border-radius:8px;box-shadow:none}.architecture:before{display:none}.archhead{margin-bottom:16px}.archjoin{padding:10px 0}.section{padding-top:46px}.section-head h2{font-size:clamp(26px,3vw,34px);letter-spacing:-.025em}.section-head{grid-template-columns:1fr 1.1fr;gap:30px}.explorer{box-shadow:none}.contrast{background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:25px}.contrast .eyebrow{color:var(--blue)}.contrast p{color:var(--muted)}.contrast .contrast-bottom{color:var(--muted);font-family:ui-monospace,monospace}.contrast h3{font-size:24px}.contrast-divider{background:var(--line)}
+.table-wrap{max-width:100%;overflow-x:auto;background:var(--paper);border:1px solid var(--line);border-radius:8px}.comparison{width:100%;min-width:800px;border-collapse:collapse;text-align:left;font-size:12px;line-height:1.6}.comparison caption{text-align:left;padding:15px 18px;font-size:14px;font-weight:650;border-bottom:1px solid var(--line);color:var(--ink)}.comparison th,.comparison td{padding:13px 15px;border-bottom:1px solid var(--line);vertical-align:top}.comparison th{background:var(--soft);font-weight:650}.comparison tbody tr:last-child td{border-bottom:0}.comparison td:nth-child(2){min-width:145px}.comparison-note{font-size:12px;color:var(--muted);margin:14px 0 23px}.evaluation-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.evaluation-grid .card{display:block;padding:22px}.evaluation-grid h3{font-size:19px}.evaluation-grid ul{padding-left:18px;margin:15px 0 0;color:var(--muted);font-size:13px}.evaluation-grid li+li{margin-top:9px}
+@media(max-width:680px){.hero,.section-head{grid-template-columns:1fr}.hero{gap:24px;padding-top:28px}.hero-subtitle{font-size:18px}.section-head{gap:13px}.evaluation-grid{grid-template-columns:1fr}.contrast{grid-template-columns:1fr}.comparison{min-width:850px}.architecture{padding:20px}.section{padding-top:35px}}
+@media print{.hero h1{font-size:31px}.hero-subtitle{font-size:16px}.hero{padding-top:20px;grid-template-columns:1fr 1fr}.scope-note{font-size:10px}.table-wrap{overflow:visible}.comparison{min-width:0;font-size:10px}.comparison th,.comparison td{padding:8px}.comparison thead{display:table-header-group}.comparison tr{break-inside:avoid}.evaluation-grid{grid-template-columns:1fr 1fr}.evaluation-grid .card{break-inside:avoid}.section-head h2{font-size:25px}}
+.decision-guide{margin:0 0 30px;padding:24px;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.decision-intro>p:last-child{font-size:13px;color:var(--muted);margin-top:12px;max-width:850px}.decision-intro h3{margin-top:8px;font-size:26px}.decision-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px;margin-top:25px}.decision-tree{min-width:0}.decision-tree h4{font-size:17px;line-height:1.4}.decision-branches{list-style:none;margin:18px 0 0;padding:0 0 0 18px;border-left:2px solid var(--line)}.decision-branches>li{position:relative;margin:0 0 20px;padding:14px;background:var(--bg);border:1px solid var(--line);border-radius:6px;break-inside:avoid}.decision-branches>li:before{content:"";position:absolute;left:-20px;top:24px;width:18px;border-top:2px solid var(--line)}.decision-condition{font-size:13px;font-weight:600;line-height:1.5}.decision-outcome{display:block;font-size:14px;font-weight:650;margin-top:9px;line-height:1.5}.decision-caveat{font-size:12px;color:var(--muted);line-height:1.6;margin-top:8px}.decision-subtree{margin-top:16px;padding-left:14px}.decision-subtree>li{background:var(--paper);margin-bottom:12px;padding:12px}.decision-subtree>li:before{left:-16px;width:14px}.decision-subtree>li:last-child{margin-bottom:0}.decision-aside{padding:16px;background:var(--soft);border:1px solid var(--line);border-radius:6px}.decision-aside p{font-size:13px;margin-top:10px;color:var(--muted)}.decision-guide>.comparison-note{margin-bottom:0}.decision-outcome:focus-visible{outline-offset:3px}
+@media(max-width:680px){.decision-guide{padding:18px 14px}.decision-columns{grid-template-columns:1fr;gap:20px}.decision-intro h3{font-size:23px}.decision-branches{padding-left:14px}.decision-branches>li:before{left:-16px;width:14px}}
+@media print{.decision-columns{grid-template-columns:1fr 1fr;gap:24px}.decision-guide{padding:18px}.decision-aside{break-inside:avoid}}
+.shared-semantics{margin-bottom:28px;padding:26px;border:1px solid var(--line);border-radius:8px;background:var(--paper)}.shared-heading h3{font-size:26px;margin:9px 0 12px;line-height:1.25}.shared-heading>p:last-child{font-size:14px;color:var(--muted)}.semantic-hub-layout{display:grid;grid-template-columns:minmax(200px,.7fr) minmax(0,1.6fr);gap:30px;align-items:center;margin:26px 0}.semantic-hub{position:relative;background:var(--soft);border:2px solid var(--cyan);border-radius:12px;text-align:center;padding:30px 18px}.semantic-hub:after{content:"";position:absolute;left:100%;top:50%;width:30px;border-top:2px solid var(--cyan)}.semantic-hub h4{font-size:25px;line-height:1.25;margin:16px 0}.semantic-hub>p:not(.eyebrow){font-size:14px;color:var(--muted)}.semantic-hub-base{margin-top:22px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}.semantic-consumers{min-width:0;border-left:2px solid var(--cyan);padding-left:20px}.semantic-consumer{padding:18px;border:1px solid var(--line);border-radius:8px;background:var(--bg);min-width:0}.primary-consumer{border-left:4px solid var(--cyan);background:var(--soft)}.semantic-interface{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);line-height:1.6}.semantic-consumer h4{font-size:19px;margin:8px 0 10px}.primary-consumer h4{font-size:24px}.semantic-consumer>p:not(.semantic-interface){font-size:12px;line-height:1.65;color:var(--muted)}.semantic-links{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:12px;font-size:12px;font-weight:600}.semantic-warning{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}.semantic-secondary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}.semantic-exchange{display:grid;grid-template-columns:minmax(200px,.7fr) minmax(0,1.6fr);gap:30px;border:1px dashed var(--muted);border-radius:8px;padding:18px}.semantic-exchange h4{font-size:16px;line-height:1.4;margin-top:6px}.semantic-exchange>p{font-size:12px;color:var(--muted)}.shared-footnote{font-size:11px;color:var(--muted);margin-top:14px;line-height:1.65}
+@media(max-width:680px){.shared-semantics{padding:20px 16px}.shared-heading h3{font-size:23px}.semantic-hub-layout,.semantic-secondary,.semantic-exchange{grid-template-columns:1fr}.semantic-hub-layout{gap:24px}.semantic-hub:after{left:50%;top:100%;width:0;height:24px;border-top:0;border-left:2px solid var(--cyan)}.semantic-consumers{border-left:0;padding-left:0}.semantic-exchange{gap:12px}.semantic-hub{padding:20px 16px}}
+@media print{.semantic-hub-layout{grid-template-columns:minmax(200px,.7fr) minmax(0,1.6fr)}.semantic-secondary{grid-template-columns:1fr 1fr}.semantic-consumer,.semantic-hub,.semantic-exchange{break-inside:avoid}.shared-heading{break-after:avoid}}
+/* Progressive disclosure keeps the guide focused on decisions and query paths. */
+.hero{display:block;max-width:900px;padding:32px 0 26px}.hero .lead{max-width:850px}.hero .scope-note{border:0;padding:0;margin-top:14px}.hero h1{max-width:850px}
+.decision-intro h2{font-size:26px;margin-top:8px;letter-spacing:-.025em}.decision-guide{margin-bottom:0}.shared-heading h2{font-size:26px;margin:9px 0 12px;line-height:1.25;letter-spacing:-.025em}
+.route-panel{min-height:0}.route-panel .facts{margin-bottom:18px}.shared-semantics{margin-bottom:16px}
+.reference-detail{background:var(--paper);border:1px solid var(--line);border-radius:8px;margin:0 0 10px;padding:0;overflow-wrap:anywhere}
+.reference-detail>summary{padding:17px 20px;cursor:pointer;font-size:14px;font-weight:600;color:var(--ink);line-height:1.5}
+.reference-detail[open]>summary{border-bottom:1px solid var(--line)}.detail-body{padding:18px 22px;font-size:14px;color:var(--muted)}.detail-body strong,.detail-body h3{color:var(--ink)}
+.reference-topic+.reference-topic,.checklist-topic+.checklist-topic{margin-top:22px;padding-top:22px;border-top:1px solid var(--line)}
+.reference-topic h3,.checklist-topic h3{font-size:17px;line-height:1.4;margin-bottom:10px}.checklist{margin-top:22px}.checklist ul{margin:0;padding-left:20px}.checklist li+li{margin-top:7px}
+#reference .section-head{margin-bottom:20px}.sources{padding-top:10px}.detail-body>.comparison-note{margin-bottom:0}
+@media(max-width:680px){.hero{padding-top:26px}.decision-intro h2,.shared-heading h2{font-size:23px}.reference-detail>summary{padding:15px 16px}.detail-body{padding:16px}.hero h1{font-size:32px}}
+@media print{.hero{display:block;max-width:none;padding:20px 0}.reference-detail{break-inside:auto}.reference-detail>summary{break-after:avoid}.reference-topic,.checklist-topic{break-inside:avoid}.detail-body{font-size:11px}}
+.fieldnotes-nav{padding-block:12px;font-size:13px;border-bottom:1px solid var(--line)}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<nav class="wrap fieldnotes-nav" aria-label="Library"><a href="../../">&larr; Trine’s Fieldnotes</a></nav>
+<header class="topbar">
+<div class="wrap masthead">
+<div class="brandline">
+<span class="customer">POWER BI</span>
+<span class="divider" aria-hidden="true">
+</span>
+<span class="snowflake">snowflake</span>
+</div>
+<span class="mastnote">Technical reference / October 2026</span>
+</div>
+</header>
+<nav class="nav" aria-label="Page navigation">
+<div class="wrap navinner">
+<div class="navlinks">
+<a href="#decision-guide">Start here</a>
+<a href="#access">Connection patterns</a>
+<a href="#semantics">Shared semantics</a>
+<a href="#reference">Technical reference</a>
+</div>
+<button class="printbtn" id="print-button" type="button" hidden>Print / PDF</button>
+</div>
+</nav>
+<main id="main" class="wrap">
+<section id="overview" aria-labelledby="overview-title">
+<div class="hero">
+<p class="eyebrow">Integration reference</p>
+<h1 id="overview-title">Power BI with Snowflake as the data platform</h1>
+<p class="lead">Snowflake holds and prepares the source data; Power BI provides reporting. Choose how reports access data, then where business definitions live. Import creates a reporting copy in Power BI; DirectQuery sends source SQL to Snowflake.</p>
+<p class="scope-note">Documentation snapshot: 21 October 2026. No workload benchmarks; availability and compatibility require verification.</p>
+</div>
+</section>
+<section id="decision-guide" class="decision-guide" aria-labelledby="decision-title">
+<div class="decision-intro">
+<p class="eyebrow">Decision guide</p>
+<h2 id="decision-title">Choose a starting point</h2>
+<p>Follow the requirement that best matches your workload. These are evaluation paths, not guaranteed recommendations; data access and semantic ownership are separate decisions.</p>
+</div>
+<div class="decision-columns">
+<div class="decision-tree">
+<h4>1. How should Power BI access the data?</h4>
+<ul class="decision-branches">
+<li>
+<p class="decision-condition">Scheduled freshness is sufficient, and the model fits capacity</p>
+<a class="decision-outcome" href="#panel-import">Evaluate Import &rarr;</a>
+<p class="decision-caveat">Check refresh time and memory. Imported rows are stored in Power BI.</p>
+</li>
+<li>
+<p class="decision-condition">Cached summaries or history plus live detail are needed</p>
+<a class="decision-outcome" href="#panel-composite">Evaluate composite / hybrid &rarr;</a>
+<p class="decision-caveat">Choose mixed tables or partitions to match the requirement; verify feature compatibility and query routing.</p>
+</li>
+<li>
+<p class="decision-condition">Source queries are needed for freshness or data volume</p>
+<p class="decision-outcome">Evaluate DirectQuery</p>
+<p class="decision-caveat">Then choose the Snowflake execution tier. Also assess this tier for the DirectQuery portion of mixed models.</p>
+<ul class="decision-branches decision-subtree">
+<li>
+<p class="decision-condition">Short, selective queries with high concurrency</p>
+<a class="decision-outcome" href="#panel-interactive">Benchmark interactive warehouses &rarr;</a>
+<p class="decision-caveat">Check the five-second limit, standard fallback, warm-up, and operating cost.</p>
+</li>
+<li>
+<p class="decision-condition">Longer, mixed, or not-yet-characterized queries</p>
+<a class="decision-outcome" href="#panel-standard">Start with a standard warehouse &rarr;</a>
+<p class="decision-caveat">Establish a baseline using generated SQL and end-to-end report latency.</p>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="decision-tree">
+<h4>2. Where should business definitions live?</h4>
+<ul class="decision-branches">
+<li>
+<p class="decision-condition">Reports depend on existing DAX behavior</p>
+<a class="decision-outcome" href="#semantic-microsoft">Keep the Microsoft semantic model &rarr;</a>
+<p class="decision-caveat">Snowflake supplies data and executes source SQL, not the Microsoft model's DAX.</p>
+</li>
+<li>
+<p class="decision-condition">Reports need selected Snowflake-defined metrics at a known grain</p>
+<a class="decision-outcome" href="#semantic-sql">Evaluate Semantic View SQL &rarr;</a>
+<p class="decision-caveat">Validate downstream aggregation; ratios and distinct counts are not generally additive.</p>
+</li>
+<li>
+<p class="decision-condition">Clients need live access to Snowflake semantics</p>
+<a class="decision-outcome" href="#semantic-xmla">Evaluate the Snowflake XMLA endpoint &rarr;</a>
+<p class="decision-caveat">Availability, commercial terms, and calculation compatibility must be confirmed. GA status remains unconfirmed.</p>
+</li>
+</ul>
+<aside class="decision-aside">
+<h4>Model reuse is a separate track</h4>
+<p>
+<a href="#ossie-details">Apache Ossie</a> exchanges model metadata. It is not a query engine or an alternative to Import or DirectQuery. Validate converted definitions in the destination engine.</p>
+</aside>
+</div>
+</div>
+<p class="comparison-note">If requirements overlap, evaluate more than one path. Use the <a href="#pilot">evaluation checklist</a> to verify correctness, freshness, identity, latency, and cost.</p>
+</section>
+<section id="access" class="section" aria-labelledby="access-title">
+<div class="section-head">
+<div><p class="eyebrow">01 / Data access &amp; compute</p><h2 id="access-title">Connection-pattern details</h2></div>
+<p>Choose a pattern to inspect its query path. Expand the implementation notes for constraints and checks.</p>
+</div>
+<noscript>
+<p class="nojs">All four options are shown below. Enable JavaScript to switch between them interactively.</p>
+</noscript>
+<div class="explorer">
+<div class="routes" id="route-tabs" aria-label="Data access options">
+<div class="routes-title">Pattern details</div>
+<button type="button" class="route-button" id="tab-import" data-panel="panel-import">
+<span class="number">01</span>
+<span>
+<b>Import</b>
+<small>Cache for report speed</small>
+</span>
+</button>
+<button type="button" class="route-button" id="tab-standard" data-panel="panel-standard">
+<span class="number">02</span>
+<span>
+<b>DirectQuery / standard</b>
+<small>Query Snowflake at runtime</small>
+</span>
+</button>
+<button type="button" class="route-button" id="tab-interactive" data-panel="panel-interactive">
+<span class="number">03</span>
+<span>
+<b>DirectQuery / interactive</b>
+<small>Optimize short, concurrent queries</small>
+</span>
+</button>
+<button type="button" class="route-button" id="tab-composite" data-panel="panel-composite">
+<span class="number">04</span>
+<span>
+<b>Composite &amp; hybrid</b>
+<small>Combine cached and live data</small>
+</span>
+</button>
+</div>
+<div>
+<article class="route-panel" id="panel-import" aria-labelledby="heading-import">
+<div class="panel-top">
+<span class="eyebrow">Pattern 01</span>
+<span class="badge green">Established connector path</span>
+</div>
+<h3 id="heading-import">Import into Power BI</h3>
+<p class="panel-intro">Power BI stores imported rows in its in-memory model and evaluates DAX there. Snowflake executes extraction queries when the model refreshes, not for each report interaction.</p>
+<div class="flow" aria-label="Data flow">
+<div class="flow-node">
+<strong>Snowflake</strong>
+<span>Query at refresh time</span>
+</div>
+<span class="flow-arrow" aria-hidden="true">&rarr;</span>
+<div class="flow-node focus">
+<strong>Power BI model</strong>
+<span>Imported data + DAX</span>
+</div>
+<span class="flow-arrow" aria-hidden="true">&rarr;</span>
+<div class="flow-node">
+<strong>Report visuals</strong>
+<span>Served from memory</span>
+</div>
+</div>
+<div class="facts">
+<div>
+<div class="fact-label">Typical use case</div>
+<p>Daily management reporting or period-end analysis where scheduled refresh meets the freshness requirement and the model fits available capacity.</p>
+</div>
+<div>
+<div class="fact-label">Technical trade-offs</div>
+<p>A separate data copy, capacity memory, refresh duration, and handling historical corrections.</p>
+</div>
+</div>
+<details>
+<summary>Implementation notes and constraints</summary>
+<div class="callout">
+<strong>Optimize the refresh path:</strong> use the current connector, select only required data, and verify that incremental-refresh filters reach Snowflake.</div>
+<ul>
+<li>The ADBC-based Snowflake connector implementation 2.0 is generally available and the default for new connections.</li>
+<li>Microsoft currently documents COUNT DISTINCT correctness and increased-memory-use issues in 2.0. Validate your deployed versions and important totals.</li>
+<li>Interactive warehouses do not speed up visuals served entirely from imported data. Use a suitable warehouse for extraction.</li>
+<li>Imported data is not re-authorized in Snowflake for every report viewer; design the Power BI access model deliberately.</li>
+</ul>
+</details>
+<p class="sourcelink">
+<a href="#ref-connector">Source: Microsoft Snowflake connector</a>
+</p>
+</article>
+<article class="route-panel" id="panel-standard" aria-labelledby="heading-standard">
+<div class="panel-top">
+<span class="eyebrow">Pattern 02</span>
+<span class="badge green">Established connector path</span>
+</div>
+<h3 id="heading-standard">DirectQuery on a standard warehouse</h3>
+<p class="panel-intro">Keep data in Snowflake. Power BI evaluates the report's semantic logic and sends generated SQL to Snowflake as needed.</p>
+<div class="flow" aria-label="Query path">
+<div class="flow-node">
+<strong>Power BI report</strong>
+<span>User interaction</span>
+</div>
+<span class="flow-arrow" aria-hidden="true">&rarr;</span>
+<div class="flow-node">
+<strong>Power BI model</strong>
+<span>DAX to source SQL</span>
+</div>
+<span class="flow-arrow" aria-hidden="true">&rarr;</span>
+<div class="flow-node focus">
+<strong>Snowflake</strong>
+<span>Standard warehouse</span>
+</div>
+</div>
+<div class="facts">
+<div>
+<div class="fact-label">Typical use case</div>
+<p>Operational reporting over changing source data, or detail-level exploration where importing the full dataset is impractical.</p>
+</div>
+<div>
+<div class="fact-label">Technical trade-offs</div>
+<p>Report-generated SQL, visual count, warehouse sizing, concurrency, and network latency.</p>
+</div>
+</div>
+<details>
+<summary>Implementation notes and constraints</summary>
+<div class="callout">
+<strong>Freshness behavior:</strong> results are retrieved from the source when queried. Power BI caching and refresh behavior still affect what the user sees.</div>
+<ul>
+<li>Measure end-to-end report latency, not just individual Snowflake query runtimes.</li>
+<li>Test totals, high-cardinality filters, and complex DAX; one visual can issue multiple SQL queries.</li>
+<li>Microsoft Entra ID per-user SSO is supported for DirectQuery when configured. Shared credentials are a different access pattern.</li>
+<li>A warehouse change does not move the Power BI semantic model or automatically simplify DAX.</li>
+</ul>
+</details>
+<p class="sourcelink">
+<a href="#ref-connector">Source: Microsoft Snowflake connector</a>
+</p>
+</article>
+<article class="route-panel" id="panel-interactive" aria-labelledby="heading-interactive">
+<div class="panel-top">
+<span class="eyebrow">Pattern 03</span>
+<span class="badge green">GA &middot; verify region</span>
+</div>
+<h3 id="heading-interactive">DirectQuery on an interactive warehouse</h3>
+<p class="panel-intro">Power BI sends SQL through the Snowflake connector to an interactive warehouse. Power BI still owns the DAX model; only the Snowflake execution tier changes.</p>
+<div class="flow" aria-label="Query path">
+<div class="flow-node">
+<strong>Power BI report</strong>
+<span>Generated SQL via connector</span>
+</div>
+<span class="flow-arrow" aria-hidden="true">&rarr;</span>
+<div class="flow-node focus">
+<strong>Interactive warehouse</strong>
+<span>Short, concurrent SQL queries</span>
+</div>
+<span class="flow-arrow" aria-hidden="true">&rarr;</span>
+<div class="flow-node">
+<strong>Existing tables</strong>
+<span>No table copy required</span>
+</div>
+</div>
+<div class="facts">
+<div>
+<div class="fact-label">Typical use case</div>
+<p>Frequently used operational views with selective filters and many concurrent users, such as status by location or account-level drill-through.</p>
+</div>
+<div>
+<div class="fact-label">Technical trade-offs</div>
+<p>Warm-cache operation, a standard fallback warehouse, and workload-specific cost testing.</p>
+</div>
+</div>
+<details>
+<summary>Five-second limit, fallback, cost, and availability</summary>
+<ul>
+<li>Queries have a five-second runtime limit. Longer queries are re-executed on a configured standard fallback warehouse, or fail if no fallback is configured. Existing standard tables are supported directly.</li>
+<li>Resuming starts a one-hour minimum billing period. The minimum auto-suspend interval is 24 hours; manual suspension is possible.</li>
+<li>Cold-cache performance differs from warm-cache performance. Region availability must be checked for the target account.</li>
+<li>Complex joins, broad scans, or expensive distinct counts may be unsuitable. Benchmark your workload; no speedup is assumed.</li>
+<li>This optimizes Snowflake execution, not Power BI rendering or visuals served from Import cache.</li>
+</ul>
+</details>
+<p class="sourcelink">
+<a href="#ref-interactive">Source: Snowflake interactive analytics</a>
+</p>
+</article>
+<article class="route-panel" id="panel-composite" aria-labelledby="heading-composite">
+<div class="panel-top">
+<span class="eyebrow">Pattern 04</span>
+<span class="badge">Feature / capacity dependent</span>
+</div>
+<h3 id="heading-composite">Composite models &amp; hybrid tables</h3>
+<p class="panel-intro">A composite model combines storage modes or sources. A hybrid table combines Import and DirectQuery partitions within one table. Queries may use cached data, Snowflake, or both.</p>
+<div class="flow" aria-label="Query routing">
+<div class="flow-node">
+<strong>Power BI report</strong>
+<span>Semantic model routes queries</span>
+</div>
+<span class="flow-arrow" aria-hidden="true">&rarr;</span>
+<div class="flow-node focus">
+<strong>Cached data</strong>
+<span>Dimensions, history, or summaries</span>
+</div>
+<span class="flow-arrow" aria-hidden="true">+</span>
+<div class="flow-node">
+<strong>Snowflake detail</strong>
+<span>DirectQuery when needed</span>
+</div>
+</div>
+<div class="facts">
+<div>
+<div class="fact-label">Typical use case</div>
+<p>Cached monthly summaries with live transaction drill-through, or imported historical partitions with a DirectQuery partition for recent changes.</p>
+</div>
+<div>
+<div class="fact-label">Technical trade-offs</div>
+<p>Storage-mode design, cache freshness, relationships, and consistent results across query paths.</p>
+</div>
+</div>
+<details>
+<summary>Implementation notes and constraints</summary>
+<div class="callout">
+<strong>Two distinct patterns:</strong> composite models can use imported aggregations over DirectQuery detail; hybrid tables combine Import and DirectQuery partitions within a table.</div>
+<ul>
+<li>Dual-mode dimensions can support both cached and source-side paths when used with facts from the same source.</li>
+<li>Hybrid tables do not support aggregation tables over their individual DirectQuery partition. Do not assume every optimization can be combined.</li>
+<li>Check licensing and capacity for the selected features, including real-time incremental refresh.</li>
+<li>Test totals, relationships, access rules, and the consistency of cached and current data.</li>
+</ul>
+</details>
+<p class="sourcelink">
+<a href="#ref-composite">Source: Microsoft composite-model guidance</a>
+</p>
+</article>
+</div>
+</div>
+
+</section>
+<section id="semantics" class="section" aria-labelledby="shared-definitions-title">
+
+<section class="shared-semantics" id="shared-definitions" aria-labelledby="shared-definitions-title">
+<div class="shared-heading">
+<p class="eyebrow">02 / Semantic ownership</p>
+<h2 id="shared-definitions-title">Shared business definitions for Power BI and AI</h2>
+<p>Define shared metrics in Snowflake and reuse them through supported BI and AI interfaces.</p>
+</div>
+<div class="semantic-hub-layout">
+<div class="semantic-hub">
+<p class="eyebrow">Definition layer</p>
+<h4>Snowflake<br>Semantic Views</h4>
+<p>Metrics, relationships,<br>and business logic</p>
+<div class="semantic-hub-base">Over Snowflake data</div>
+</div>
+<div class="semantic-consumers">
+<div class="semantic-consumer primary-consumer">
+<p class="semantic-interface">Runtime access &middot; SQL / XMLA</p>
+<h4>Power BI</h4>
+<p>Consume selected metric results through SQL, or evaluate live semantic access through the Snowflake XMLA endpoint.</p>
+<div class="semantic-links">
+<a href="#semantic-sql">SQL consumption &rarr;</a>
+<a href="#semantic-xmla">XMLA access &rarr;</a>
+</div>
+<p class="semantic-warning">XMLA availability, licensing, and supported calculations must be confirmed; GA status remains unconfirmed.</p>
+</div>
+<div class="semantic-secondary">
+<div class="semantic-consumer">
+<p class="semantic-interface">Runtime access &middot; natural language to SQL</p>
+<h4>AI experiences</h4>
+<p>Ground supported AI experiences in the same definitions through a configured semantic-query layer. Validate generated queries and results.</p>
+</div>
+<div class="semantic-consumer">
+<p class="semantic-interface">Runtime access &middot; SQL</p>
+<h4>SQL applications</h4>
+<p>Applications query Semantic View results at a defined grain. The application still owns presentation and interaction logic.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="semantic-exchange">
+<div>
+<p class="semantic-interface">Design time &middot; metadata exchange</p>
+<h4>Apache Ossie (Incubating)</h4>
+</div>
+<p>Exchange supported model definitions through converters. This is not a runtime query connection or automatic synchronization. <a href="#ossie-details">Model exchange details &rarr;</a>
+</p>
+</div>
+<p class="shared-footnote">Shared definitions provide a common reference, not automatic result equivalence. Validate filter context, aggregation grain, access rules, and interface compatibility. Existing Microsoft DAX models do not migrate automatically.</p>
+</section>
+<div class="disclosure-group" aria-label="Semantic-model implementation details">
+<details class="reference-detail" id="semantic-microsoft">
+<summary>Keep an existing Microsoft semantic model</summary>
+<div class="detail-body">
+<p>Retain Power BI or SSAS measures, calculation groups, and established DAX behavior when reports depend on them. Reuse the central model across reports.</p>
+<p>Snowflake supplies rows or executes source SQL; it does not execute that model's DAX directly. Logic held only in the Microsoft model is not automatically available to Snowflake-native AI.</p>
+</div>
+</details>
+<details class="reference-detail" id="semantic-sql">
+<summary>Consume Semantic View results through SQL</summary>
+<div class="detail-body">
+<p>Query Snowflake-defined metrics at a known grain through explicit semantic-view SQL, potentially exposed through a SQL view for relational consumption.</p>
+<p>The interface returns rows, not a complete browsable Power BI semantic model. Validate filter context and downstream aggregation; do not sum ratios or precomputed distinct counts. This is not automatic Power BI model discovery.</p>
+<p><a href="#ref-semantic">Semantic View guidance</a></p>
+</div>
+</details>
+<details class="reference-detail" id="semantic-xmla">
+<summary>Live semantic access through XMLA &mdash; availability to confirm</summary>
+<div class="detail-body">
+<p>The Snowflake Semantic Views XMLA endpoint, powered by AtScale, is designed to expose Snowflake semantics to Power BI and Excel. Validate client queries and supported calculations; do not assume SSAS feature parity or automatic DAX migration.</p>
+<p>The launch announced private preview soon. Current access, commercial terms, and GA status remain unconfirmed. <a href="#ref-xmla">Snowflake endpoint announcement</a></p>
+<p><strong>Power BI Service's XMLA endpoint is different:</strong> external tools query and manage a Power BI-hosted model, including deployments and partition refreshes. Eligible capacity/licensing and settings are required; writes need read-write enablement. <a href="#ref-powerbi-xmla">Power BI endpoint documentation</a></p>
+</div>
+</details>
+</div>
+</section>
+<section id="reference" class="section" aria-labelledby="reference-title">
+<div class="section-head"><div><p class="eyebrow">03 / Optional reference</p><h2 id="reference-title">Technical reference</h2></div><p>Expand only what you need for model reuse or evaluation.</p></div>
+<details id="interoperability" class="reference-detail">
+<summary>Model reuse and cataloging</summary>
+<div class="detail-body">
+<section class="reference-topic" id="ossie-details">
+<h3>Apache Ossie (Incubating)</h3>
+<p>Use case: transfer model definitions between tools or maintain a common exchange representation. Formerly Open Semantic Interchange, Ossie has an initial bidirectional Power BI converter with TMDL integration. TMDL is Microsoft's Tabular Model Definition Language.</p>
+<p>
+<a href="#ref-ossie">September 2026 announcement</a>
+</p>
+<p>DAX is a recognized expression language in the specification. That does not mean every DAX expression automatically becomes executable Snowflake SQL. Validate conversion coverage, results, and change ownership; do not assume lossless conversion or continuous synchronization.</p>
+</section>
+<section class="reference-topic">
+<h3>Power BI model ingestion</h3>
+<p>Use case: initialize a Snowflake Semantic View from an existing Power BI model. Ingest a .pbit template or .pbix report to map Snowflake-backed tables, relationships, and supported calculations. A .pbit contains no embedded data rows.</p>
+<p>
+<a href="#ref-ingestion">Documented feature coverage</a>
+</p>
+<p>Calculation groups, several time-intelligence functions, selection-dependent expressions, and report-level measures are among the documented exclusions. Treat ingestion as a starting point, not a lossless migration.</p>
+</section>
+<section class="reference-topic">
+<h3>Horizon Catalog metadata connections</h3>
+<p>Use case: find reports and models, trace dependencies, or assess the impact of source changes. Metadata connections collect supported Power BI metadata for discovery, documentation, and cross-platform lineage.</p>
+<p>
+<a href="#ref-horizon">Horizon Catalog documentation</a> &mdash; check account availability.
+</p>
+<p>This helps teams understand and find assets. It is not a report-serving connection, and it does not automatically synchronize every measure or calculation across platforms.</p>
+</section>
+</div>
+</details>
+<details id="pilot" class="reference-detail">
+<summary>Evaluation checklist</summary>
+<div class="detail-body">
+<p>Test the selected pattern against explicit requirements. Separate report rendering, semantic-model evaluation, source query execution, and data synchronization when measuring results.</p>
+<div class="checklist">
+<article class="checklist-topic">
+<h3>Workload and freshness</h3>
+<ul>
+<li>Record data volume, update frequency, filter selectivity, and concurrent users.</li>
+<li>Set a maximum acceptable age of data; include Snowflake data processing, model refresh, and BI caching.</li>
+<li>Include drill-through, totals, broad date ranges, and high-cardinality filters.</li>
+</ul>
+</article>
+<article class="checklist-topic">
+<h3>Execution and latency</h3>
+<ul>
+<li>Capture Power BI-generated SQL and distinguish source time from end-to-end visual time.</li>
+<li>Measure p50 and p95 for single-user and concurrent workloads; document result-cache and warm-cache conditions.</li>
+<li>For interactive warehouses, record fallback frequency and latency after resume.</li>
+</ul>
+</article>
+<article class="checklist-topic">
+<h3>Calculation equivalence</h3>
+<ul>
+<li>Compare totals, ratios, distinct counts, period comparisons, and filter-context behavior with a reference result.</li>
+<li>For SQL consumption, record the output grain and which downstream aggregations remain valid.</li>
+<li>For conversion, inventory unsupported DAX, calculation groups, relationships, and report-level measures.</li>
+</ul>
+</article>
+<article class="checklist-topic">
+<h3>Identity and operations</h3>
+<ul>
+<li>Identify the executing principal: report viewer, refresh identity, or shared connection identity.</li>
+<li>Test access behavior separately for imported model data and Snowflake source queries.</li>
+<li>Verify client and gateway versions, network requirements, region support, and preview eligibility.</li>
+</ul>
+</article>
+<article class="checklist-topic">
+<h3>Data movement and cost</h3>
+<ul>
+<li>Account for Power BI imports, Snowflake warehouse caches, model metadata, and refresh jobs.</li>
+<li>Include Snowflake compute and storage, Power BI licensing/capacity, and relevant network charges.</li>
+<li>Use a representative operating period; a single warm query does not establish total cost.</li>
+</ul>
+</article>
+<article class="checklist-topic">
+<h3>Model lifecycle</h3>
+<ul>
+<li>Assign ownership of source definitions and any generated or converted models.</li>
+<li>Test schema changes, refresh failures, deployments, and rollback procedures.</li>
+<li>Keep runtime connectivity, model conversion, and catalog metadata ingestion as separate validation tracks.</li>
+</ul>
+</article>
+</div>
+<p class="comparison-note">No single pattern is recommended for every workload. Document the measured results and any unsupported requirements before selecting an architecture.</p>
+</div>
+</details>
+</section>
+<section id="sources" class="sources" aria-label="Sources and availability">
+<details id="source-details">
+<summary>Sources, technical references &amp; availability notes</summary>
+<div class="source-grid">
+<div class="source-item" id="ref-connector">
+<b>Connectivity</b>
+<a href="https://learn.microsoft.com/en-us/power-query/connectors/snowflake" target="_blank" rel="noopener noreferrer">Microsoft &mdash; Snowflake connector and known issues</a>
+</div>
+<div class="source-item" id="ref-composite">
+<b>Mixed storage modes</b>
+<a href="https://learn.microsoft.com/en-us/power-bi/guidance/composite-model-guidance" target="_blank" rel="noopener noreferrer">Microsoft &mdash; Composite and hybrid model guidance</a>
+</div>
+<div class="source-item" id="ref-interactive">
+<b>Interactive compute</b>
+<a href="https://docs.snowflake.com/en/user-guide/interactive" target="_blank" rel="noopener noreferrer">Snowflake &mdash; Runtime, fallback, billing, and table support</a>
+</div>
+<div class="source-item">
+<b>Region support</b>
+<a href="https://docs.snowflake.com/en/user-guide/interactive-cloud-availability" target="_blank" rel="noopener noreferrer">Snowflake &mdash; Interactive analytics cloud availability</a>
+</div>
+<div class="source-item" id="ref-xmla">
+<b>Snowflake XMLA / Vendor announcement</b>
+<a href="https://www.atscale.com/press/atscale-snowflake-semantic-views-power-bi-excel/" target="_blank" rel="noopener noreferrer">AtScale &mdash; Semantic Views XMLA endpoint announcement</a>
+</div>
+<div class="source-item" id="ref-powerbi-xmla">
+<b>Power BI XMLA / Separate endpoint</b>
+<a href="https://learn.microsoft.com/en-us/fabric/enterprise/powerbi/service-premium-connect-tools" target="_blank" rel="noopener noreferrer">Microsoft &mdash; Semantic model connectivity and management</a>
+</div>
+<div class="source-item" id="ref-ossie">
+<b>Semantic exchange</b>
+<a href="https://www.snowflake.com/en/blog/engineering/apache-ossie-microsoft-ecosystem-support/" target="_blank" rel="noopener noreferrer">Snowflake &mdash; Apache Ossie and Microsoft ecosystem support</a>
+</div>
+<div class="source-item" id="ref-ingestion">
+<b>Model reuse</b>
+<a href="https://docs.snowflake.com/en/user-guide/views-semantic/power-bi-ingestion" target="_blank" rel="noopener noreferrer">Snowflake &mdash; Power BI ingestion support and exclusions</a>
+</div>
+<div class="source-item" id="ref-horizon">
+<b>Metadata &amp; discovery</b>
+<a href="https://docs.snowflake.com/en/user-guide/snowflake-horizon/horizon-context" target="_blank" rel="noopener noreferrer">Snowflake &mdash; Horizon Context in Horizon Catalog</a>
+</div>
+<div class="source-item" id="ref-semantic">
+<b>Semantic consumption</b>
+<a href="https://docs.snowflake.com/en/user-guide/views-semantic/best-practices-dev" target="_blank" rel="noopener noreferrer">Snowflake &mdash; Developing and deploying Semantic Views</a>
+</div>
+</div>
+<p class="source-note">Documentation snapshot: 21 October 2026. Availability, licensing, regional support, and connector behavior can change. Confirm the target environment before implementation. XMLA GA status and account eligibility remain unconfirmed; the cited launch described private preview soon. Performance and compatibility require workload-specific validation.</p>
+</details>
+</section>
+</main>
+<footer>
+<div class="wrap footer-inner">
+<span>
+<b>POWER BI + SNOWFLAKE</b> &nbsp;/&nbsp; Architecture guide</span>
+<span>Personal perspectives by Trine Siewartz, not official Snowflake documentation. <a href="../../">Back to the fieldnotes</a></span>
+</div>
+</footer>
+<script>
+(function () {
+  'use strict';
+  const tabList = document.getElementById('route-tabs');
+  const buttons = Array.from(tabList.querySelectorAll('.route-button'));
+  tabList.setAttribute('role', 'tablist');
+  tabList.setAttribute('aria-orientation', 'vertical');
+  function select(button, moveFocus) {
+    buttons.forEach(function (candidate) {
+      const selected = candidate === button;
+      candidate.setAttribute('aria-selected', String(selected));
+      candidate.tabIndex = selected ? 0 : -1;
+      document.getElementById(candidate.dataset.panel).hidden = !selected;
+    });
+    if (moveFocus) button.focus();
+  }
+  buttons.forEach(function (button, index) {
+    button.setAttribute('role', 'tab');
+    button.setAttribute('aria-controls', button.dataset.panel);
+    const panel = document.getElementById(button.dataset.panel);
+    panel.setAttribute('role', 'tabpanel');
+    panel.setAttribute('aria-labelledby', button.id);
+    panel.tabIndex = 0;
+    button.addEventListener('click', function () { select(button, false); });
+    button.addEventListener('keydown', function (event) {
+      let next = index;
+      if (event.key === 'ArrowDown' || event.key === 'ArrowRight') next = (index + 1) % buttons.length;
+      else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') next = (index - 1 + buttons.length) % buttons.length;
+      else if (event.key === 'Home') next = 0;
+      else if (event.key === 'End') next = buttons.length - 1;
+      else return;
+      event.preventDefault();
+      select(buttons[next], true);
+    });
+  });
+  select(document.getElementById('tab-import'), false);
+  function revealTarget(hash) {
+    const anchor = document.getElementById(hash.slice(1));
+    if (!anchor) return null;
+    const panel = anchor.closest('.route-panel');
+    if (panel) select(buttons.find(function (button) { return button.dataset.panel === panel.id; }), false);
+    // A target can be a disclosure itself or be nested inside one.
+    let ancestor = anchor;
+    while (ancestor) {
+      if (ancestor.tagName === 'DETAILS') ancestor.open = true;
+      ancestor = ancestor.parentElement;
+    }
+    return anchor;
+  }
+  document.querySelectorAll('a[href^="#"]').forEach(function (link) {
+    link.addEventListener('click', function (event) {
+      if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      revealTarget(link.getAttribute('href'));
+    });
+  });
+  function revealCurrentAnchor() {
+    const anchor = revealTarget(window.location.hash);
+    if (anchor) anchor.scrollIntoView({ block: 'start' });
+  }
+  window.addEventListener('hashchange', revealCurrentAnchor);
+  revealCurrentAnchor();
+  const printButton = document.getElementById('print-button');
+  printButton.hidden = false;
+  printButton.addEventListener('click', function () { window.print(); });
+  let detailStates = null;
+  window.addEventListener('beforeprint', function () {
+    detailStates = Array.from(document.querySelectorAll('details')).map(function (detail) {
+      const state = { element: detail, open: detail.open };
+      detail.open = true;
+      return state;
+    });
+  });
+  window.addEventListener('afterprint', function () {
+    if (detailStates) detailStates.forEach(function (state) { state.element.open = state.open; });
+    detailStates = null;
+  });
+}());
+</script>
+</body>
+</html>

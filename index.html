@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#f7f5ef">
   <title>Trine’s Fieldnotes — Data & AI, in practice</title>
   <script type="application/json" id="snowflake-report-metadata">
-    {"generated":"2026-10-21","intent":"Personal, customer-facing library of HTML guides focused on data and AI with Snowflake, explicitly distinguished from official Snowflake documentation. Public library landing page; source guides are not yet available.","sections":[{"id":"library","title":"The fieldnotes","dataSources":[{"type":"user-provided","description":"User named multi-agent patterns and Power BI + Snowflake as initial topics. Original HTML files have not been supplied."}],"producerNotes":"Cards are static HTML. To add a guide, add an article with data-category and data-status, copy its approved assets into pages/<slug>/, and use a relative link to pages/<slug>/. Set data-status to ready and replace the preview notice with the link. Never include confidential content in public deployment."}]}
+    {"generated":"2026-10-21","intent":"Personal, customer-facing library of HTML guides focused on data and AI with Snowflake, explicitly distinguished from official Snowflake documentation. Public library landing page; multi-agent patterns guide available, Power BI + Snowflake guide pending.","sections":[{"id":"library","title":"The fieldnotes","dataSources":[{"type":"file","path":"pages/multi-agent-patterns/index.html"},{"type":"user-provided","description":"User named multi-agent patterns and Power BI + Snowflake as initial topics. Multi-agent guide imported from architecture_patterns.html; Power BI guide not yet supplied."}],"producerNotes":"Cards are static HTML. To add a guide, add an article with data-category and data-status, copy its approved assets into pages/<slug>/, and use a relative link to pages/<slug>/. Set data-status to ready and replace the preview notice with the link. Never include confidential content in public deployment."}]}
   </script>
   <style>
     :root { color-scheme: light dark; --paper:#f7f5ef; --card:#fffefa; --ink:#243a48; --muted:#5f6f76; --line:#d9dfda; --blue:#17658c; --wash:#e8f0f2; --green:#426f5c; --amber:#896338; --shadow:0 10px 28px #243a4808; }
@@ -89,15 +89,15 @@
       <div class="notebook" aria-hidden="true"><small>TRINE’S FIELDNOTES</small><p>Good ideas.<br>Practical patterns.<br>New possibilities.</p><div class="rule"></div><div class="rule"></div><small>NOTES FROM THE FIELD</small></div>
     </section>
     <section class="library" id="library" aria-labelledby="library-title">
-      <div class="section-head"><h2 id="library-title">The fieldnotes</h2><p id="results" role="status" aria-live="polite" aria-atomic="true">2 topics · 0 published guides</p></div>
+      <div class="section-head"><h2 id="library-title">The fieldnotes</h2><p id="results" role="status" aria-live="polite" aria-atomic="true">2 topics · 1 published guide</p></div>
       <div class="tools" id="tools" hidden>
         <div class="filters" role="group" aria-label="Filter by topic"><button class="filter" type="button" data-filter="all" aria-pressed="true">All notes</button><button class="filter" type="button" data-filter="ai" aria-pressed="false">AI & Agents</button><button class="filter" type="button" data-filter="analytics" aria-pressed="false">BI & Analytics</button></div>
         <div class="search"><label for="search">Search</label><input id="search" type="search" placeholder="Find a fieldnote…" autocomplete="off"></div>
       </div>
       <div class="cards" id="cards">
-        <article class="card" data-category="ai" data-status="pending">
+        <article class="card" data-category="ai" data-status="ready">
           <div class="art" aria-hidden="true"><svg viewBox="0 0 260 130" fill="none"><path d="M130 41V65M130 65H43V86M130 65H217V86M130 65V86" stroke="currentColor" stroke-width="1.5"/><rect x="92" y="9" width="76" height="32" rx="7" fill="var(--card)" stroke="currentColor" stroke-width="1.5"/><rect x="15" y="86" width="56" height="32" rx="7" fill="var(--card)" stroke="currentColor" stroke-width="1.5"/><rect x="102" y="86" width="56" height="32" rx="7" fill="var(--card)" stroke="currentColor" stroke-width="1.5"/><rect x="189" y="86" width="56" height="32" rx="7" fill="var(--card)" stroke="currentColor" stroke-width="1.5"/><circle cx="130" cy="25" r="5" fill="currentColor"/><circle cx="43" cy="102" r="4" fill="currentColor"/><circle cx="130" cy="102" r="4" fill="currentColor"/><circle cx="217" cy="102" r="4" fill="currentColor"/></svg></div>
-          <div class="card-body"><div class="card-top"><span class="category">AI & Agents</span><span class="number">FIELDNOTE / 01</span></div><h3>Multi-agent patterns</h3><p class="description">A place for the multi-agent patterns guide.</p><div class="tags"><span class="tag">Multi-agent</span><span class="tag">Architecture</span></div><div class="card-bottom"><span class="dot" aria-hidden="true"></span>Guide coming soon</div></div>
+          <div class="card-body"><div class="card-top"><span class="category">AI & Agents</span><span class="number">FIELDNOTE / 01</span></div><h3><a href="pages/multi-agent-patterns/">Multi-agent patterns</a></h3><p class="description">Compare Hub and Spoke, Fat Orchestrator, and Hybrid architectures — with diagrams, prompt placement, and MCP tool patterns.</p><div class="tags"><span class="tag">Multi-agent</span><span class="tag">Architecture</span><span class="tag">MCP</span></div><div class="card-bottom"><a href="pages/multi-agent-patterns/" aria-label="Read the multi-agent patterns guide">Read fieldnote ↗</a></div></div>
         </article>
         <article class="card" data-category="analytics" data-status="pending">
           <div class="art analytics" aria-hidden="true"><svg viewBox="0 0 260 130" fill="none"><rect x="15" y="24" width="84" height="82" rx="8" fill="var(--card)" stroke="currentColor" stroke-width="1.5"/><path d="M99 65H160M151 58L160 65L151 72" stroke="currentColor" stroke-width="1.5"/><path d="M35 82V62M56 82V50M77 82V39" stroke="currentColor" stroke-width="9" stroke-linecap="round"/><ellipse cx="203" cy="35" rx="35" ry="13" fill="var(--card)" stroke="currentColor" stroke-width="1.5"/><path d="M168 35V91C168 108 238 108 238 91V35M168 63C168 80 238 80 238 63" stroke="currentColor" stroke-width="1.5"/></svg></div>
@@ -105,7 +105,7 @@
         </article>
       </div>
       <div class="empty" id="empty" hidden><h3>No matching fieldnotes</h3><p>Try a different search or browse all topics.</p><button class="reset" id="reset" type="button">Show all notes</button></div>
-      <p class="preview-note">The collection is taking shape. The first guides are coming soon.</p>
+      <p class="preview-note">The collection is growing. Explore the multi-agent patterns guide; Power BI + Snowflake is coming soon.</p>
       <noscript><p>Search and filters need JavaScript. All fieldnotes are shown above.</p></noscript>
     </section>
     <section class="about" id="about" aria-labelledby="about-title"><div><div class="eyebrow">Behind the notes</div><h2 id="about-title">Curated by Trine.</h2></div><p>A growing collection for conversations about data and AI: a home for practical explainers, useful patterns, and ideas to explore together. Pick a topic, open a guide, and take the conversation further.</p></section>

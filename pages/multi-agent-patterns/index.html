@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="snowflake-source" content="cortex-agent-authored" />
+  <title>Multi-Agent Architecture Patterns | Trine’s Fieldnotes</title>
+  <meta name="description" content="Compare Hub and Spoke, Fat Orchestrator, and Hybrid agent architectures, with diagrams, prompt placement, and MCP tool patterns.">
+  <script type="application/json" id="snowflake-report-metadata">
+  {
+    "generated": "2026-10-13",
+    "publication": {"date":"2026-10-21","sourceFile":"architecture_patterns.html","notes":"Imported into Trine’s Fieldnotes. Original technical content retained, not independently revalidated. Added library navigation, personal documentation disclaimer, and responsive layout fixes."},
+    "intent": "Three architectural patterns for multi-agent demo using Acme Corp data",
+    "sections": [
+      { "id": "domains", "title": "Data Domains", "dataSources": [], "producerNotes": "Static description of Acme Corp HR/Finance/IT tables" },
+      { "id": "pattern-a", "title": "Pattern A: Hub and Spoke", "dataSources": [], "producerNotes": "Pure agent-to-agent routing via CORTEX_AGENT_RUN. Diagram is pure HTML/CSS (no Mermaid)." },
+      { "id": "pattern-b", "title": "Pattern B: Fat Orchestrator", "dataSources": [], "producerNotes": "Single agent with all tools. Diagram is pure HTML/CSS." },
+      { "id": "pattern-c", "title": "Pattern C: Hybrid", "dataSources": [], "producerNotes": "Mixed native tools + sub-agents. Diagram is pure HTML/CSS." },
+      { "id": "comparison", "title": "Comparison", "dataSources": [], "producerNotes": "Qualitative comparison of patterns A-C (Pattern D removed 2026-10-13)" },
+      { "id": "legend", "title": "Tool Type Legend", "dataSources": [], "producerNotes": "Native vs MCP tool types" },
+      { "id": "mcp-types", "title": "MCP Server Types", "dataSources": [], "producerNotes": "Managed / External / SPCS MCP servers, decision tree (HTML/CSS), native vs MCP table" }
+    ]
+  }
+  </script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: light-dark(#f6f8fb, #0b1220);
+      --surface: light-dark(#ffffff, #121b2e);
+      --surface-2: light-dark(#f1f5f9, #18233a);
+      --border: light-dark(#e2e8f0, #26334d);
+      --text: light-dark(#1e293b, #e2e8f0);
+      --muted: light-dark(#64748b, #94a3b8);
+      --heading: light-dark(#0f172a, #f8fafc);
+      --accent: light-dark(#0b7fbf, #29b5e8);
+      --line: light-dark(#94a3b8, #4b5d7c);
+      --a: light-dark(#7c3aed, #a78bfa);
+      --b: light-dark(#0b7fbf, #38bdf8);
+      --c: light-dark(#d97706, #fbbf24);
+      --good: light-dark(#15803d, #4ade80);
+      --good-soft: light-dark(#f0fdf4, #0d2a1a);
+      --bad: light-dark(#b91c1c, #f87171);
+      --bad-soft: light-dark(#fef2f2, #2d1416);
+      --shadow: 0 4px 16px rgba(15,23,42,.08);
+      --radius: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+      --arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 28'%3E%3Crect x='5' y='0' width='2' height='22'/%3E%3Cpath d='M0 20h12l-6 8z'/%3E%3C/svg%3E");
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      font-size: 16px; line-height: 1.6;
+      color: var(--text); background: var(--bg);
+    }
+    .wrap { max-width: 1080px; width: 100%; margin: 0 auto; padding: 0 clamp(16px, 4vw, 32px); }
+    h1, h2, h3 { color: var(--heading); line-height: 1.25; }
+    h2 { font-size: clamp(1.4rem, 3vw, 1.75rem); margin: 0 0 6px; letter-spacing: -0.01em; }
+    h3 { font-size: 1.05rem; margin: 28px 0 10px; }
+    p { margin: 0 0 12px; }
+    code {
+      font-family: var(--mono); font-size: .86em;
+      background: var(--surface-2); border: 1px solid var(--border);
+      padding: 1px 6px; border-radius: 6px;
+    }
+    img, svg { max-width: 100%; height: auto; }
+
+    .fieldnotes-nav { padding-block: 14px; font-size: .85rem; }
+    .fieldnotes-nav a, footer a { color: var(--accent); text-underline-offset: 4px; }
+    .chip, .tool, .res { overflow-wrap: anywhere; min-width: 0; }
+    a:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+    /* Hero */
+    .hero {
+      background:
+        radial-gradient(1200px 400px at 85% -10%, rgba(41,181,232,.22), transparent 60%),
+        radial-gradient(800px 300px at 0% 120%, rgba(124,58,237,.16), transparent 60%),
+        linear-gradient(180deg, light-dark(#0b2540, #07101f), light-dark(#11365c, #0b1a30));
+      color: #e2e8f0;
+      padding: clamp(40px, 8vw, 72px) 0 clamp(36px, 6vw, 56px);
+    }
+    .eyebrow {
+      display: inline-block; font-size: .78rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+      color: #7dd3fc; background: rgba(125,211,252,.1); border: 1px solid rgba(125,211,252,.25);
+      padding: 4px 12px; border-radius: 999px; margin-bottom: 18px;
+    }
+    .hero h1 { color: #fff; font-size: clamp(2rem, 5.5vw, 3rem); margin: 0 0 14px; letter-spacing: -0.02em; }
+    .hero p.lead { color: #cbd5e1; font-size: clamp(1rem, 2vw, 1.15rem); max-width: 680px; }
+    .stats { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+    .stat { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 12px; padding: 10px 16px; min-width: 120px; }
+    .stat b { display: block; font-size: 1.5rem; color: #fff; line-height: 1.1; }
+    .stat span { font-size: .8rem; color: #94a3b8; }
+
+    /* Nav */
+    nav.toc {
+      position: sticky; top: 0; z-index: 10;
+      background: light-dark(rgba(246,248,251,.88), rgba(11,18,32,.88));
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+    nav.toc .wrap { display: flex; gap: 6px; overflow-x: auto; padding-top: 10px; padding-bottom: 10px; scrollbar-width: none; }
+    nav.toc a {
+      flex: none; text-decoration: none; color: var(--muted); font-size: .88rem; font-weight: 500;
+      padding: 6px 12px; border-radius: 999px; border: 1px solid transparent;
+    }
+    nav.toc a:hover { color: var(--heading); background: var(--surface); border-color: var(--border); }
+
+    /* Sections & cards */
+    main { padding: 40px 0 64px; }
+    section { scroll-margin-top: 64px; margin-bottom: 40px; }
+    .section-head { margin-bottom: 18px; }
+    .section-head p { color: var(--muted); max-width: 760px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: clamp(18px, 3.5vw, 32px);
+    }
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px; }
+    .domain { position: relative; overflow: hidden; }
+    .domain::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--dc); }
+    .domain h3 { margin: 4px 0 6px; font-size: 1.15rem; }
+    .domain .type { font-size: .82rem; color: var(--muted); margin-bottom: 12px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { font-family: var(--mono); font-size: .76rem; background: var(--surface-2); border: 1px solid var(--border); padding: 2px 8px; border-radius: 6px; }
+
+    .pattern { border-top: 4px solid var(--pc); }
+    .pattern-title { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+    .letter {
+      flex: none; width: 52px; height: 52px; border-radius: 14px;
+      display: grid; place-items: center; font-size: 1.5rem; font-weight: 800; color: #fff;
+      background: var(--pc); box-shadow: 0 6px 18px -6px var(--pc);
+    }
+    .pattern-title .kicker { font-size: .78rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--pc); }
+    .pattern-title h2 { margin: 0; }
+    .tagline { font-size: 1.02rem; }
+
+    /* ---------- Diagram system (pure HTML/CSS) ---------- */
+    .k-native { --k-bg: light-dark(#eff6ff, #0f213d); --k-border: light-dark(#bfdbfe, #1e3a64); --k-fg: light-dark(#1d4ed8, #93c5fd); }
+    .k-mcp    { --k-bg: light-dark(#fffbeb, #271b07); --k-border: light-dark(#fde68a, #5a3d0c); --k-fg: light-dark(#b45309, #fbbf24); }
+    .k-agent  { --k-bg: light-dark(#f0fdf4, #0b2416); --k-border: light-dark(#bbf7d0, #174d2c); --k-fg: light-dark(#15803d, #4ade80); }
+    .k-spcs   { --k-bg: light-dark(#f5f3ff, #1c1536); --k-border: light-dark(#ddd6fe, #3f2f78); --k-fg: light-dark(#6d28d9, #c4b5fd); }
+
+    .flow {
+      display: flex; flex-direction: column; align-items: center;
+      margin: 22px 0; padding: clamp(18px, 3vw, 28px) clamp(12px, 3vw, 28px);
+      border-radius: 12px; border: 1px solid var(--border);
+      background: radial-gradient(circle, light-dark(#dfe6ef, #1f2c45) 1px, transparent 1px) 0 0 / 18px 18px, var(--surface-2);
+    }
+    .flow > * { max-width: 100%; }
+    .arrow {
+      flex: none; width: 12px; height: 28px; background: var(--line);
+      -webkit-mask: var(--arrow) center / 12px 28px no-repeat; mask: var(--arrow) center / 12px 28px no-repeat;
+    }
+    .stem { flex: none; width: 2px; height: 14px; background: var(--line); }
+
+    .fan { --gap: 16px; display: grid; gap: var(--gap); width: 100%; padding-top: 28px; position: relative; }
+    .fan > .branch { position: relative; min-width: 0; display: flex; flex-direction: column; align-items: stretch; }
+    .fan > .branch > .group, .fan > .branch > .mcp-card { flex: 1; }
+    .fan > .branch::before {
+      content: ""; position: absolute; top: -28px; left: calc(50% - 6px); width: 12px; height: 28px; background: var(--line);
+      -webkit-mask: var(--arrow) center / 12px 28px no-repeat; mask: var(--arrow) center / 12px 28px no-repeat;
+    }
+    .fan > .branch::after {
+      content: ""; position: absolute; top: -28px; height: 2px; background: var(--line);
+      left: calc(var(--gap) / -2); right: calc(var(--gap) / -2);
+    }
+    .fan > .branch:first-child::after { left: 50%; }
+    .fan > .branch:last-child::after { right: 50%; }
+    .fan > .branch:only-child::after { display: none; }
+
+    .node-user {
+      background: var(--surface); border: 1.5px dashed var(--line); color: var(--muted);
+      border-radius: 999px; padding: 6px 18px; font-weight: 600; font-size: .9rem;
+    }
+    .node-super {
+      width: min(100%, 380px); text-align: center; color: #fff;
+      background: linear-gradient(135deg, #0b5f99, #29b5e8);
+      border-radius: 14px; padding: 14px 22px;
+      box-shadow: 0 12px 28px -14px rgba(11,127,191,.8);
+    }
+    .node-super .g-kind { color: rgba(255,255,255,.8); }
+    .node-super .g-name { color: #fff; font-size: 1.08rem; }
+    .node-super p { margin: 4px 0 0; font-size: .85rem; opacity: .92; }
+
+    .group {
+      background: var(--k-bg); border: 1px solid var(--k-border);
+      border-radius: 12px; padding: 12px 14px; text-align: left;
+    }
+    .g-head { display: flex; flex-direction: column; margin-bottom: 10px; }
+    .g-kind { font-size: .68rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--k-fg); }
+    .g-name { font-weight: 700; color: var(--heading); font-size: .97rem; line-height: 1.3; }
+    .tools { display: flex; flex-direction: column; gap: 6px; }
+    .tools.row { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+    .tools.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); }
+    .tool {
+      background: var(--surface); border: 1px solid var(--k-border); border-radius: 8px;
+      padding: 6px 10px; font-size: .82rem; line-height: 1.35;
+    }
+    .tool b { display: block; font-family: var(--mono); font-weight: 600; font-size: .76rem; color: var(--k-fg); }
+    .tool span { color: var(--text); }
+    .w-router { width: min(100%, 680px); }
+
+    /* Decision tree */
+    .q {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+      width: 100%; max-width: 560px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 12px 14px; box-shadow: var(--shadow);
+    }
+    .q-text { flex: 1 1 190px; display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--heading); font-size: .93rem; line-height: 1.35; }
+    .q-text::before {
+      content: "?"; flex: none; width: 24px; height: 24px; border-radius: 50%;
+      display: grid; place-items: center; font-size: .8rem; font-weight: 800;
+      background: var(--surface-2); color: var(--accent); border: 1px solid var(--border);
+    }
+    .yes-to { display: flex; align-items: center; gap: 8px; }
+    .yn { flex: none; font-size: .68rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: 2px 9px; border-radius: 999px; }
+    .yn.y { background: var(--good-soft); color: var(--good); border: 1px solid light-dark(#bbf7d0, #164e2c); }
+    .yn.n { background: var(--bad-soft); color: var(--bad); border: 1px solid light-dark(#fecaca, #5a1f22); }
+    .yes-to::before { content: "\2192"; order: 1; color: var(--muted); font-weight: 700; }
+    .yes-to .res { order: 2; }
+    .res {
+      background: var(--k-bg); border: 1px solid var(--k-border); border-radius: 10px;
+      padding: 5px 12px; font-weight: 700; font-size: .84rem; color: var(--heading); line-height: 1.3;
+    }
+    .res small { display: block; font-family: var(--mono); font-weight: 500; font-size: .7rem; color: var(--k-fg); }
+    .no-step { position: relative; display: flex; justify-content: center; width: 100%; }
+    .no-step .yn { position: absolute; top: 4px; left: calc(50% + 14px); }
+    .branch-label { align-self: center; margin-bottom: 10px; }
+    .fan.dt > .branch { align-items: center; }
+
+    @media (max-width: 720px) {
+      .fan { grid-template-columns: 1fr !important; row-gap: 28px; }
+      .fan > .branch::after { display: none; }
+    }
+
+    /* Pros / cons */
+    .prompts { margin: 0 0 20px; border: 1px solid var(--border); border-left: 4px solid var(--pc); border-radius: 12px; background: var(--surface-2); padding: 16px 18px; }
+    .prompts h4 { margin: 0 0 4px; font-size: .82rem; letter-spacing: .08em; text-transform: uppercase; color: var(--pc); }
+    .prompts > p { margin: 0 0 12px; font-size: .92rem; color: var(--muted); }
+    .prompt-layers { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px; }
+    .layer { min-width: 0; overflow-wrap: anywhere; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: .9rem; }
+    .layer .where { font-size: .74rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+    .layer b { display: block; color: var(--heading); margin: 2px 0 6px; }
+    .layer ul { margin: 0; padding-left: 18px; }
+    .layer li { margin: 3px 0; }
+    .prompts .note { margin: 12px 0 0; font-size: .86rem; color: var(--muted); }
+    .proscons { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; }
+    .pc-box { border-radius: 12px; padding: 16px 18px; border: 1px solid var(--border); }
+    .pc-box.pros { background: var(--good-soft); border-color: light-dark(#bbf7d0, #164e2c); }
+    .pc-box.cons { background: var(--bad-soft); border-color: light-dark(#fecaca, #5a1f22); }
+    .pc-box h4 { margin: 0 0 10px; font-size: .82rem; letter-spacing: .08em; text-transform: uppercase; }
+    .pc-box.pros h4 { color: var(--good); }
+    .pc-box.cons h4 { color: var(--bad); }
+    .pc-box ul { list-style: none; margin: 0; padding: 0; }
+    .pc-box li { position: relative; padding-left: 26px; margin: 8px 0; font-size: .95rem; }
+    .pc-box li::before {
+      position: absolute; left: 0; top: 2px; width: 18px; height: 18px; border-radius: 50%;
+      display: grid; place-items: center; font-size: 11px; font-weight: 800; color: #fff;
+    }
+    .pc-box.pros li::before { content: "\2713"; background: var(--good); }
+    .pc-box.cons li::before { content: "\2715"; background: var(--bad); }
+
+    /* Tables */
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+    table { border-collapse: collapse; width: 100%; font-size: .93rem; }
+    th, td { padding: 12px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); }
+    tbody tr:last-child td { border-bottom: none; }
+    thead th {
+      background: var(--surface-2); color: var(--muted);
+      font-size: .76rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap;
+    }
+    tbody tr:hover td { background: light-dark(#f8fafc, #152038); }
+    td:first-child { font-weight: 600; color: var(--heading); }
+    .col-a { border-top: 3px solid var(--a); }
+    .col-b { border-top: 3px solid var(--b); }
+    .col-c { border-top: 3px solid var(--c); }
+    .rating { display: inline-flex; align-items: center; gap: 8px; }
+    .dots { display: inline-flex; gap: 3px; }
+    .dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+    .dots i.on { background: var(--accent); }
+    .yes { color: var(--good); font-weight: 600; }
+    .no { color: var(--muted); }
+
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: .76rem; font-weight: 600; white-space: nowrap; margin: 1px 2px 1px 0; }
+    .badge-native { background: light-dark(#dbeafe, #172f55); color: light-dark(#1e40af, #93c5fd); }
+    .badge-mcp { background: light-dark(#fef3c7, #3a2508); color: light-dark(#92400e, #fbbf24); }
+    .badge-agent { background: light-dark(#dcfce7, #0c2d1b); color: light-dark(#166534, #4ade80); }
+    .badge-spcs { background: light-dark(#ede9fe, #251a48); color: light-dark(#5b21b6, #c4b5fd); }
+    .badge.mono { font-family: var(--mono); font-weight: 500; }
+
+    .mcp-card h3 { margin: 10px 0 4px; }
+    .mcp-card .cmd { margin-bottom: 4px; }
+    .mcp-card dl { margin: 0; font-size: .92rem; }
+    .mcp-card dt { font-size: .74rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-top: 14px; }
+    .mcp-card dd { margin: 4px 0 0; }
+    .mcp-card .chips { margin-top: 6px; }
+
+    footer { color: var(--muted); font-size: .85rem; text-align: center; padding: 24px 0 40px; border-top: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+  <nav class="wrap fieldnotes-nav" aria-label="Library"><a href="../../">&larr; Trine’s Fieldnotes</a></nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="eyebrow">Multi-agent demo &middot; Acme Corp</span>
+      <h1>Multi-Agent Architecture Patterns</h1>
+      <p class="lead">Three ways to build a multi-agent demo across the Acme Corp HR, Finance and IT domains &mdash; each trading off simplicity, modularity and demo coverage differently.</p>
+      <div class="stats">
+        <div class="stat"><b>3</b><span>Architecture patterns</span></div>
+        <div class="stat"><b>3</b><span>Data domains</span></div>
+        <div class="stat"><b>16</b><span>Source tables</span></div>
+        <div class="stat"><b>3</b><span>MCP server types</span></div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="Sections">
+    <div class="wrap">
+      <a href="#domains">Data domains</a>
+      <a href="#pattern-a">A &middot; Hub &amp; Spoke</a>
+      <a href="#pattern-b">B &middot; Fat Orchestrator</a>
+      <a href="#pattern-c">C &middot; Hybrid</a>
+      <a href="#comparison">Comparison</a>
+      <a href="#legend">Tool legend</a>
+      <a href="#mcp-types">MCP server types</a>
+    </div>
+  </nav>
+
+  <main class="wrap">
+
+    <!-- Domains -->
+    <section id="domains">
+      <div class="section-head">
+        <h2>Data Domains</h2>
+        <p>Every pattern draws on the same three domains, each mixing structured tables with unstructured documents.</p>
+      </div>
+      <div class="grid-3">
+        <div class="card domain" style="--dc: var(--a)">
+          <h3>HR</h3>
+          <div class="type">Structured + unstructured (handbook)</div>
+          <div class="chips">
+            <span class="chip">employees</span><span class="chip">compensation_bands</span><span class="chip">handbook_docs</span>
+            <span class="chip">org_chart</span><span class="chip">benefits_plans</span><span class="chip">benefits_enrollments</span>
+          </div>
+        </div>
+        <div class="card domain" style="--dc: var(--b)">
+          <h3>Finance</h3>
+          <div class="type">Structured + unstructured (invoices, approvals)</div>
+          <div class="chips">
+            <span class="chip">budgets</span><span class="chip">expenses</span><span class="chip">financial_reports</span>
+            <span class="chip">spend_approvals</span><span class="chip">invoices</span><span class="chip">product_usage</span>
+          </div>
+        </div>
+        <div class="card domain" style="--dc: var(--c)">
+          <h3>IT</h3>
+          <div class="type">Structured + unstructured (incidents)</div>
+          <div class="chips">
+            <span class="chip">incidents</span><span class="chip">services</span><span class="chip">sla_records</span>
+            <span class="chip">infrastructure_assets</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pattern A -->
+    <section id="pattern-a" class="card pattern" style="--pc: var(--a)">
+      <div class="pattern-title">
+        <div class="letter">A</div>
+        <div>
+          <div class="kicker">Pure agent-to-agent</div>
+          <h2>Hub and Spoke</h2>
+        </div>
+      </div>
+      <p class="tagline">The main agent has <strong>zero native tools</strong>. It only routes to sub-agents via <code>CORTEX_AGENT_RUN</code>. Each sub-agent has rich native tools (semantic views + Search + charts).</p>
+
+      <div class="flow" role="img" aria-label="Pattern A diagram: user to main agent to sub-agents MCP to HR, Finance and IT agents">
+        <div class="node-user">User question</div>
+        <div class="arrow"></div>
+        <div class="node-super">
+          <div class="g-kind">Main Agent</div>
+          <div class="g-name">Orchestrator</div>
+          <p>Routes by domain &mdash; no tools of its own</p>
+        </div>
+        <div class="arrow"></div>
+        <div class="group k-mcp w-router">
+          <div class="g-head"><span class="g-kind">MCP server</span><span class="g-name">Sub-Agents MCP</span></div>
+          <div class="tools row">
+            <div class="tool"><b>CORTEX_AGENT_RUN</b><span>hr-agent</span></div>
+            <div class="tool"><b>CORTEX_AGENT_RUN</b><span>finance-agent</span></div>
+            <div class="tool"><b>CORTEX_AGENT_RUN</b><span>it-agent</span></div>
+          </div>
+        </div>
+        <div class="stem"></div>
+        <div class="fan" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+          <div class="branch">
+            <div class="group k-agent">
+              <div class="g-head"><span class="g-kind">Cortex Agent</span><span class="g-name">HR Agent</span></div>
+              <div class="tools">
+                <div class="tool"><b>semantic_view</b><span>comp / benefits / org</span></div>
+                <div class="tool"><b>cortex_search</b><span>handbook</span></div>
+                <div class="tool"><b>data_to_chart</b></div>
+              </div>
+            </div>
+          </div>
+          <div class="branch">
+            <div class="group k-agent">
+              <div class="g-head"><span class="g-kind">Cortex Agent</span><span class="g-name">Finance Agent</span></div>
+              <div class="tools">
+                <div class="tool"><b>semantic_view</b><span>budgets / P&amp;L / usage</span></div>
+                <div class="tool"><b>cortex_search</b><span>invoices / approvals</span></div>
+                <div class="tool"><b>data_to_chart</b></div>
+                <div class="tool"><b>code_execution</b></div>
+              </div>
+            </div>
+          </div>
+          <div class="branch">
+            <div class="group k-agent">
+              <div class="g-head"><span class="g-kind">Cortex Agent</span><span class="g-name">IT Agent</span></div>
+              <div class="tools">
+                <div class="tool"><b>semantic_view</b><span>infra / SLAs</span></div>
+                <div class="tool"><b>cortex_search</b><span>incidents</span></div>
+                <div class="tool"><b>data_to_chart</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="prompts">
+        <h4>Where do the prompts go?</h4>
+        <p>Each agent makes its own decisions, so orchestration prompts are split across three layers.</p>
+        <div class="prompt-layers">
+          <div class="layer">
+            <div class="where">1 &middot; Main agent</div>
+            <b>Which domain?</b>
+            <ul>
+              <li><code>orchestration</code>: routing rules per domain, how to split cross-domain questions, when to ask the user</li>
+              <li><code>response</code>: tone and format for the end user; merge specialist answers</li>
+            </ul>
+          </div>
+          <div class="layer">
+            <div class="where">2 &middot; Sub-Agents MCP</div>
+            <b>Tool descriptions</b>
+            <ul>
+              <li>The main agent picks a sub-agent from each <code>CORTEX_AGENT_RUN</code> tool's name and <code>description</code></li>
+              <li>Keep them specific and consistent with the routing rules</li>
+            </ul>
+          </div>
+          <div class="layer">
+            <div class="where">3 &middot; Each sub-agent</div>
+            <b>Which tool in the domain?</b>
+            <ul>
+              <li><code>orchestration</code>: when to use the semantic view, search or charts</li>
+              <li><code>response</code>: factual, structured output &mdash; it is read by another agent</li>
+            </ul>
+          </div>
+        </div>
+        <p class="note">Business rules (definitions, filters) belong in the semantic view itself. With agent toolsets, only tools are inherited &mdash; all instructions must live in the main agent.</p>
+      </div>
+
+      <div class="proscons">
+        <div class="pc-box pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Cleanest separation of concerns</li>
+            <li>Each sub-agent can be tested independently</li>
+            <li>Sub-agents get <code>data_to_chart</code> (native tools)</li>
+            <li>Easy to add new domains &mdash; just add another sub-agent</li>
+          </ul>
+        </div>
+        <div class="pc-box cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>Extra orchestration hop (main &rarr; sub = 2 LLM calls minimum)</li>
+            <li>Cross-domain questions require calling multiple sub-agents and merging results</li>
+            <li>More objects to manage (4 agents + 1 sub-agents MCP)</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pattern B -->
+    <section id="pattern-b" class="card pattern" style="--pc: var(--b)">
+      <div class="pattern-title">
+        <div class="letter">B</div>
+        <div>
+          <div class="kicker">All tools in one agent</div>
+          <h2>Fat Orchestrator</h2>
+        </div>
+      </div>
+      <p class="tagline">One single agent has <strong>all tools</strong> &mdash; multiple semantic views, multiple Cortex Search services, charting and code execution. No sub-agents; the LLM picks the right tool from its description.</p>
+
+      <div class="flow" role="img" aria-label="Pattern B diagram: user to a single main agent with all native tools and a utility MCP server">
+        <div class="node-user">User question</div>
+        <div class="arrow"></div>
+        <div class="node-super">
+          <div class="g-kind">Main Agent</div>
+          <div class="g-name">Full Toolbox</div>
+          <p>Single agent with every tool</p>
+        </div>
+        <div class="stem"></div>
+        <div class="fan" style="grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);">
+          <div class="branch">
+            <div class="group k-native">
+              <div class="g-head"><span class="g-kind">Native tools</span><span class="g-name">All domains</span></div>
+              <div class="tools grid">
+                <div class="tool"><b>semantic_view</b><span>hr_data</span></div>
+                <div class="tool"><b>semantic_view</b><span>finance_data</span></div>
+                <div class="tool"><b>semantic_view</b><span>it_data</span></div>
+                <div class="tool"><b>cortex_search</b><span>handbook</span></div>
+                <div class="tool"><b>cortex_search</b><span>incidents</span></div>
+                <div class="tool"><b>cortex_search</b><span>invoices</span></div>
+                <div class="tool"><b>data_to_chart</b></div>
+                <div class="tool"><b>code_execution</b></div>
+                <div class="tool"><b>web_search</b></div>
+              </div>
+            </div>
+          </div>
+          <div class="branch">
+            <div class="group k-mcp">
+              <div class="g-head"><span class="g-kind">MCP server</span><span class="g-name">Utility MCP</span></div>
+              <div class="tools">
+                <div class="tool"><b>SYSTEM_EXECUTE_SQL</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="prompts">
+        <h4>Where do the prompts go?</h4>
+        <p>One agent makes every decision, so all orchestration lives in one spec &mdash; tool descriptions carry most of the weight.</p>
+        <div class="prompt-layers">
+          <div class="layer">
+            <div class="where">1 &middot; Orchestration</div>
+            <b>Which tool for which question?</b>
+            <ul>
+              <li>One section per domain: which semantic view and search service to use</li>
+              <li>How to combine tools for cross-domain questions; when to chart or run code</li>
+            </ul>
+          </div>
+          <div class="layer">
+            <div class="where">2 &middot; Tool descriptions</div>
+            <b>Disambiguate similar tools</b>
+            <ul>
+              <li>Each semantic view and search tool needs a <code>description</code> that names its domain and what it does <em>not</em> cover</li>
+              <li>This matters more as the tool count grows</li>
+            </ul>
+          </div>
+          <div class="layer">
+            <div class="where">3 &middot; Response</div>
+            <b>How to answer</b>
+            <ul>
+              <li><code>response</code>: tone, format and citations for the end user</li>
+              <li>One place to keep the experience consistent</li>
+            </ul>
+          </div>
+        </div>
+        <p class="note">Business rules (definitions, filters) belong in the semantic views. Keep the orchestration prompt structured by domain so it stays maintainable as it grows.</p>
+      </div>
+
+      <div class="proscons">
+        <div class="pc-box pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Simplest architecture (1 agent, 1&ndash;2 MCP servers)</li>
+            <li>No routing overhead &mdash; direct tool selection</li>
+            <li>Cross-domain questions handled naturally in one turn</li>
+            <li>Fewer LLM calls per question</li>
+          </ul>
+        </div>
+        <div class="pc-box cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>Tool selection accuracy degrades with many tools (9+ can confuse the LLM)</li>
+            <li>One massive instruction prompt &mdash; harder to maintain</li>
+            <li>Cannot test domains independently</li>
+            <li>No modularity &mdash; adding a domain means editing the single agent</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pattern C -->
+    <section id="pattern-c" class="card pattern" style="--pc: var(--c)">
+      <div class="pattern-title">
+        <div class="letter">C</div>
+        <div>
+          <div class="kicker">Native tools + sub-agents</div>
+          <h2>Hybrid</h2>
+        </div>
+      </div>
+      <p class="tagline">The main agent owns tools that span all domains (org chart, charting, code, web search, simple searches via MCP). For <strong>complex</strong> domains needing multi-step reasoning, it delegates to specialist sub-agents.</p>
+
+      <div class="flow" role="img" aria-label="Pattern C diagram: main agent with native tools, a specialist agents MCP to finance and IT ops agents, and a utility MCP">
+        <div class="node-user">User question</div>
+        <div class="arrow"></div>
+        <div class="node-super">
+          <div class="g-kind">Main Agent</div>
+          <div class="g-name">Hybrid Orchestrator</div>
+          <p>Cross-domain tools + routes to specialists</p>
+        </div>
+        <div class="stem"></div>
+        <div class="fan" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr) minmax(0, 1fr);">
+          <div class="branch">
+            <div class="group k-native">
+              <div class="g-head"><span class="g-kind">Native tools</span><span class="g-name">Main agent toolbox</span></div>
+              <div class="tools">
+                <div class="tool"><b>semantic_view</b><span>org_structure</span></div>
+                <div class="tool"><b>data_to_chart</b></div>
+                <div class="tool"><b>web_search</b></div>
+                <div class="tool"><b>code_execution</b></div>
+              </div>
+            </div>
+          </div>
+          <div class="branch">
+            <div class="group k-mcp" style="flex: none;">
+              <div class="g-head"><span class="g-kind">MCP server</span><span class="g-name">Specialist Agents MCP</span></div>
+              <div class="tools row">
+                <div class="tool"><b>CORTEX_AGENT_RUN</b><span>finance-specialist</span></div>
+                <div class="tool"><b>CORTEX_AGENT_RUN</b><span>it-ops-specialist</span></div>
+              </div>
+            </div>
+            <div class="stem" style="align-self: center;"></div>
+            <div class="fan" style="grid-template-columns: repeat(2, minmax(0, 1fr)); --gap: 12px;">
+              <div class="branch">
+                <div class="group k-agent">
+                  <div class="g-head"><span class="g-kind">Cortex Agent</span><span class="g-name">Finance Specialist</span></div>
+                  <div class="tools">
+                    <div class="tool"><b>semantic_view</b><span>budgets / P&amp;L / usage / spend</span></div>
+                    <div class="tool"><b>cortex_search</b><span>approvals</span></div>
+                    <div class="tool"><b>data_to_chart</b></div>
+                  </div>
+                </div>
+              </div>
+              <div class="branch">
+                <div class="group k-agent">
+                  <div class="g-head"><span class="g-kind">Cortex Agent</span><span class="g-name">IT Ops Specialist</span></div>
+                  <div class="tools">
+                    <div class="tool"><b>semantic_view</b><span>infra / SLAs</span></div>
+                    <div class="tool"><b>cortex_search</b><span>incidents</span></div>
+                    <div class="tool"><b>data_to_chart</b></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="branch">
+            <div class="group k-mcp">
+              <div class="g-head"><span class="g-kind">MCP server</span><span class="g-name">Utility MCP</span></div>
+              <div class="tools">
+                <div class="tool"><b>SYSTEM_EXECUTE_SQL</b></div>
+                <div class="tool"><b>CORTEX_SEARCH</b><span>handbook</span></div>
+                <div class="tool"><b>CORTEX_SEARCH</b><span>invoices</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="prompts">
+        <h4>Where do the prompts go?</h4>
+        <p>The main agent decides whether to answer directly or delegate, so the key prompt is the line between the two.</p>
+        <div class="prompt-layers">
+          <div class="layer">
+            <div class="where">1 &middot; Main agent</div>
+            <b>Answer or delegate?</b>
+            <ul>
+              <li><code>orchestration</code>: which questions to answer with its own tools, which to hand to a specialist</li>
+              <li><code>response</code>: one voice for the user, whether answered directly or delegated</li>
+            </ul>
+          </div>
+          <div class="layer">
+            <div class="where">2 &middot; MCP tool descriptions</div>
+            <b>Specialists and shared tools</b>
+            <ul>
+              <li>Specialist Agents MCP: each <code>CORTEX_AGENT_RUN</code> description says which complex questions it owns</li>
+              <li>Utility MCP: search and SQL tools described so they don't overlap the specialists</li>
+            </ul>
+          </div>
+          <div class="layer">
+            <div class="where">3 &middot; Each specialist</div>
+            <b>Multi-step reasoning in the domain</b>
+            <ul>
+              <li><code>orchestration</code>: how to break down domain questions across its semantic view, search and charts</li>
+              <li><code>response</code>: factual, structured output for the main agent</li>
+            </ul>
+          </div>
+        </div>
+        <p class="note">Avoid overlap: if a question can be answered both by a main-agent tool and a specialist, the orchestration prompt must say which wins.</p>
+      </div>
+
+      <div class="proscons">
+        <div class="pc-box pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Best of both worlds: simple questions answered directly, complex ones delegated</li>
+            <li>Fewer LLM hops for common questions (handbook lookup, org chart)</li>
+            <li>Each tool uses the integration that fits it: native where you need native-only features (charting, analytical search), MCP where tools are shared across agents or call other agents</li>
+            <li>Complex domains stay modular &mdash; specialist agents can be built, tested and evolved independently</li>
+          </ul>
+        </div>
+        <div class="pc-box cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>Most complex to design &mdash; must decide what lives where</li>
+            <li>Potential overlap in routing decisions</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Comparison -->
+    <section id="comparison">
+      <div class="section-head">
+        <h2>Comparison</h2>
+        <p>How the three patterns stack up for a live demo.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Criteria</th><th class="col-a">A &middot; Hub &amp; Spoke</th><th class="col-b">B &middot; Fat Orchestrator</th><th class="col-c">C &middot; Hybrid</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Simplicity</td>
+              <td><span class="rating"><span class="dots"><i class="on"></i><i class="on"></i><i></i></span>Medium</span></td>
+              <td><span class="rating"><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i></span>Highest</span></td>
+              <td><span class="rating"><span class="dots"><i class="on"></i><i></i><i></i></span>Lowest</span></td>
+            </tr>
+            <tr>
+              <td>Demo coverage</td>
+              <td><span class="badge badge-agent">Agent-to-agent</span></td>
+              <td><span class="badge badge-native">Native</span><span class="badge badge-mcp">MCP</span></td>
+              <td><span class="badge badge-native">Native</span><span class="badge badge-mcp">MCP</span><span class="badge badge-agent">Agent-to-agent</span></td>
+            </tr>
+            <tr><td>Cross-domain questions</td><td>Needs multiple sub-agent calls</td><td>Natural</td><td>Mixed</td></tr>
+            <tr>
+              <td>Tool accuracy</td>
+              <td><span class="rating"><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i></span>High (few tools per agent)</span></td>
+              <td><span class="rating"><span class="dots"><i class="on"></i><i></i><i></i></span>Risk of confusion (9+)</span></td>
+              <td><span class="rating"><span class="dots"><i class="on"></i><i class="on"></i><i></i></span>Balanced</span></td>
+            </tr>
+            <tr><td>Latency</td><td>Higher (2 LLM hops)</td><td>Lowest (1 hop)</td><td>Variable</td></tr>
+            <tr>
+              <td>Modularity</td>
+              <td><span class="rating"><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i></span>Highest</span></td>
+              <td><span class="rating"><span class="dots"><i class="on"></i><i></i><i></i></span>Lowest</span></td>
+              <td><span class="rating"><span class="dots"><i class="on"></i><i class="on"></i><i></i></span>Medium</span></td>
+            </tr>
+            <tr><td>Best audience</td><td>&ldquo;Multi-agent&rdquo; story</td><td>&ldquo;Simplicity&rdquo; story</td><td>&ldquo;Real-world architecture&rdquo;</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Legend -->
+    <section id="legend">
+      <div class="section-head">
+        <h2>Tool Type Legend</h2>
+        <p>The tools a Cortex Agent can use, per the <a href="https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-agents#tools">Cortex Agents documentation</a>, plus the tool types a Snowflake-managed MCP server can expose.</p>
+      </div>
+
+      <h3>Native agent tools</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tool</th><th>In agent spec</th><th>Key capability</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-native">Semantic view (Cortex Analyst)</span></td><td><code>cortex_analyst_text_to_sql</code></td><td>Generates SQL over structured data from natural language, using a semantic view</td></tr>
+            <tr><td><span class="badge badge-native">Cortex Search</span></td><td><code>cortex_search</code></td><td>Retrieves information from unstructured data; the agent can adjust filters, columns, result counts and time decay per query</td></tr>
+            <tr><td><span class="badge badge-native">Analytical search</span> <span class="badge badge-mcp">Preview</span></td><td><code>orchestration.capabilities.analytical_search: true</code></td><td>Answers counts, aggregates and trends over large document collections by combining Cortex Search with AI functions and SQL</td></tr>
+            <tr><td><span class="badge badge-native">Code execution</span></td><td><code>code_execution</code></td><td>Runs Python in a secure, isolated sandbox to process data and perform calculations (<code>code_toolset_all</code> gives the full Cortex Code toolset instead)</td></tr>
+            <tr><td><span class="badge badge-native">Data to Chart</span></td><td><code>data_to_chart</code></td><td>Generates visualizations from data returned by other tools</td></tr>
+            <tr><td><span class="badge badge-native">Custom tools</span></td><td><code>generic</code></td><td>Stored procedures and UDFs for your own business logic or backend calls</td></tr>
+            <tr><td><span class="badge badge-native">Agent skills</span></td><td><code>skills:</code></td><td>Packaged bundles of instructions and scripts for repeatable, task-specific capabilities</td></tr>
+            <tr><td><span class="badge badge-mcp">MCP connectors</span></td><td><code>mcp_servers:</code></td><td>Tools hosted on remote MCP servers (Jira, Salesforce, your own apps)</td></tr>
+            <tr><td><span class="badge badge-agent">Agent toolsets</span></td><td>See docs</td><td>References to other agents whose tools are inherited at run time &mdash; modular, composable agents</td></tr>
+            <tr><td><span class="badge badge-native">Web search</span></td><td><code>web_search</code></td><td>Real-time information from the public internet via Brave Search; must be enabled at account level</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Snowflake-managed MCP server tool types</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tool type</th><th>Wraps</th><th>Key capability</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-mcp mono">CORTEX_ANALYST_MESSAGE</span></td><td>Semantic view</td><td>Semantic view exposed via MCP</td></tr>
+            <tr><td><span class="badge badge-mcp mono">CORTEX_SEARCH_SERVICE_QUERY</span></td><td>Cortex Search service</td><td>Cortex Search exposed via MCP</td></tr>
+            <tr><td><span class="badge badge-mcp mono">SYSTEM_EXECUTE_SQL</span></td><td>&mdash;</td><td>Run arbitrary SQL</td></tr>
+            <tr><td><span class="badge badge-agent mono">CORTEX_AGENT_RUN</span></td><td>Cortex Agent</td><td>Call another agent as a tool</td></tr>
+            <tr><td><span class="badge badge-mcp mono">GENERIC</span></td><td>UDF or stored procedure</td><td>Custom tool exposed via MCP</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- MCP types -->
+    <section id="mcp-types">
+      <div class="section-head">
+        <h2>MCP Server Types</h2>
+        <p>A Cortex Agent can reach three types of MCP servers in Snowflake. Each solves a different integration need.</p>
+      </div>
+
+      <div class="flow" role="img" aria-label="A Cortex Agent connects to managed, external and SPCS-hosted MCP servers">
+        <div class="node-super">
+          <div class="g-kind">Consumer</div>
+          <div class="g-name">Cortex Agent</div>
+        </div>
+        <div class="stem"></div>
+        <div class="fan" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+          <div class="branch">
+            <div class="card mcp-card domain" style="--dc: var(--b)">
+              <span class="badge badge-native">Snowflake-managed</span>
+              <h3>Managed MCP</h3>
+              <div class="cmd"><code>CREATE MCP SERVER</code></div>
+              <dl>
+                <dt>Exposes</dt>
+                <dd class="chips">
+                  <span class="chip">CORTEX_ANALYST_MESSAGE</span><span class="chip">CORTEX_SEARCH_SERVICE_QUERY</span>
+                  <span class="chip">CORTEX_AGENT_RUN</span><span class="chip">SYSTEM_EXECUTE_SQL</span><span class="chip">UDF / proc wrappers</span>
+                </dd>
+                <dt>Use when</dt>
+                <dd>Tools map to existing Snowflake objects; sharing tools across agents; agent-to-agent orchestration; exposing an agent to external MCP clients</dd>
+              </dl>
+            </div>
+          </div>
+          <div class="branch">
+            <div class="card mcp-card domain" style="--dc: var(--c)">
+              <span class="badge badge-mcp">External connector</span>
+              <h3>External MCP</h3>
+              <div class="cmd"><code>CREATE EXTERNAL MCP SERVER</code></div>
+              <dl>
+                <dt>Connects to</dt>
+                <dd class="chips">
+                  <span class="chip">Salesforce</span><span class="chip">Atlassian / Jira</span><span class="chip">GitHub</span>
+                  <span class="chip">Linear</span><span class="chip">Google Workspace</span><span class="chip">Custom OAuth endpoint</span>
+                </dd>
+                <dt>Use when</dt>
+                <dd>Calling external APIs; per-user OAuth authentication to third-party services</dd>
+              </dl>
+            </div>
+          </div>
+          <div class="branch">
+            <div class="card mcp-card domain" style="--dc: var(--a)">
+              <span class="badge badge-spcs">SPCS-hosted</span>
+              <h3>Custom MCP</h3>
+              <div class="cmd"><code>CREATE CUSTOM MCP SERVER</code></div>
+              <dl>
+                <dt>Runs</dt>
+                <dd class="chips">
+                  <span class="chip">Custom Python / FastMCP</span><span class="chip">ML inference</span>
+                  <span class="chip">External API wrappers</span><span class="chip">Proprietary algorithms</span>
+                </dd>
+                <dt>Use when</dt>
+                <dd>Custom business logic; ML inference; external APIs without MCP endpoints; GPU or complex dependencies</dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Decision tree: which MCP type to use?</h3>
+      <div class="flow" role="img" aria-label="Decision tree for choosing between native tools, managed MCP, external MCP and SPCS-hosted MCP">
+        <div class="q">
+          <div class="q-text">Need to call external SaaS?</div>
+          <div class="yes-to"><span class="yn y">Yes</span><span class="res k-mcp">External MCP<small>CREATE EXTERNAL MCP SERVER</small></span></div>
+        </div>
+        <div class="no-step"><span class="arrow"></span><span class="yn n">No</span></div>
+        <div class="q">
+          <div class="q-text">Is it a Snowflake-native object?</div>
+        </div>
+        <div class="stem"></div>
+        <div class="fan dt" style="grid-template-columns: repeat(2, minmax(0, 1fr)); --gap: 24px;">
+          <div class="branch">
+            <span class="yn y branch-label">Yes</span>
+            <div class="q">
+              <div class="q-text">Need data_to_chart or analytical search?</div>
+              <div class="yes-to"><span class="yn y">Yes</span><span class="res k-native">Native tool<small>tools + tool_resources</small></span></div>
+            </div>
+            <div class="no-step"><span class="arrow"></span><span class="yn n">No</span></div>
+            <div class="q">
+              <div class="q-text">Shared across agents or exposed externally?</div>
+              <div class="yes-to"><span class="yn y">Yes</span><span class="res k-agent">Managed MCP<small>CREATE MCP SERVER</small></span></div>
+            </div>
+            <div class="no-step"><span class="arrow"></span><span class="yn n">No</span></div>
+            <span class="res k-native">Native tool<small>tools + tool_resources</small></span>
+          </div>
+          <div class="branch">
+            <span class="yn n branch-label">No</span>
+            <div class="q">
+              <div class="q-text">Need another agent?</div>
+              <div class="yes-to"><span class="yn y">Yes</span><span class="res k-agent">Managed MCP<small>CREATE MCP SERVER</small></span></div>
+            </div>
+            <div class="no-step"><span class="arrow"></span><span class="yn n">No</span></div>
+            <div class="q">
+              <div class="q-text">Need custom code with dependencies?</div>
+              <div class="yes-to"><span class="yn y">Yes</span><span class="res k-spcs">SPCS-hosted MCP<small>CREATE CUSTOM MCP SERVER</small></span></div>
+            </div>
+            <div class="no-step"><span class="arrow"></span><span class="yn n">No</span></div>
+            <div class="q">
+              <div class="q-text">Simple UDF or proc?</div>
+              <div class="yes-to"><span class="yn y">Yes</span><span class="res k-native">Native tool<small>type: generic</small></span></div>
+            </div>
+            <div class="no-step"><span class="arrow"></span><span class="yn n">No</span></div>
+            <span class="res k-spcs">SPCS-hosted MCP<small>CREATE CUSTOM MCP SERVER</small></span>
+          </div>
+        </div>
+      </div>
+
+      <h3>Native tools vs MCP: when to use each</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Scenario</th><th>Native tool</th><th>MCP server</th></tr></thead>
+          <tbody>
+            <tr><td>Semantic view with <code>data_to_chart</code></td><td class="yes">&#10003; Only native supports charting</td><td class="no">&mdash;</td></tr>
+            <tr><td>Cortex Search with analytical search</td><td class="yes">&#10003; Only native supports it</td><td class="no">&mdash;</td></tr>
+            <tr><td>Agent-to-agent orchestration</td><td class="no">&mdash;</td><td class="yes">&#10003; CORTEX_AGENT_RUN</td></tr>
+            <tr><td>SQL execution by the agent</td><td class="no">&mdash;</td><td class="yes">&#10003; SYSTEM_EXECUTE_SQL</td></tr>
+            <tr><td>Share tools across multiple agents</td><td class="no">&mdash;</td><td class="yes">&#10003; Define once, reference many</td></tr>
+            <tr><td>Expose agent to external MCP clients</td><td class="no">&mdash;</td><td class="yes">&#10003; Claude, CoCo, Cursor</td></tr>
+            <tr><td>Call Salesforce, Jira, GitHub</td><td class="no">&mdash;</td><td class="yes">&#10003; External MCP + OAuth</td></tr>
+            <tr><td>Custom ML inference / GPUs</td><td class="no">&mdash;</td><td class="yes">&#10003; SPCS-hosted</td></tr>
+            <tr><td>Simple UDF / procedure call</td><td class="yes">&#10003; type: generic</td><td>Optional (if sharing needed)</td></tr>
+            <tr><td>Web search</td><td class="yes">&#10003; Built-in</td><td class="no">&mdash;</td></tr>
+            <tr><td>Code execution (Python sandbox)</td><td class="yes">&#10003; Built-in</td><td class="no">&mdash;</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="wrap"><p>Multi-Agent Architecture Patterns &middot; Acme Corp multi-agent demo</p><p>Personal perspectives by Trine Siewartz, not official Snowflake documentation.</p><a href="../../">Back to the fieldnotes</a> &middot; <a href="https://docs.snowflake.com/">Official Snowflake docs</a></div>
+  </footer>
+
+</body>
+</html>
